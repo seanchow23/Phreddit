@@ -8,18 +8,18 @@ import WelcomePage from './components/WelcomePage';
 import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
 import Header from './components/Header';
-// import Home from './components/Home';
-// import CreatePost from './components/CreatePost';
-// import CreateCommunity from './components/CreateCommunity';
-// import CommunitySection from './components/CommunitySection';
-// import PostSection from './components/PostSection';
-// import SearchView from './components/SearchView';
-// import Navbar from './components/Navbar';
-// import NewReplyPage from './components/NewReplyPage';
-// import './stylesheets/main.css';
-// import './stylesheets/home.css';
-// import './stylesheets/header.css';
-// import './stylesheets/navBar.css';
+import Home from './components/Home';
+import CreatePost from './components/CreatePost';
+import CreateCommunity from './components/CreateCommunity';
+import CommunitySection from './components/CommunitySection';
+import PostSection from './components/PostSection';
+import SearchView from './components/SearchView';
+import Navbar from './components/Navbar';
+import NewReplyPage from './components/NewReplyPage';
+import './stylesheets/main.css';
+import './stylesheets/home.css';
+import './stylesheets/header.css';
+import './stylesheets/navBar.css';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -101,6 +101,7 @@ function App() {
       alert('Login successful!');
       setView('home');
     } catch (error) {
+      setView('login');
       console.error('Error logging in:', error.response?.data?.message || error.message);
       alert(error.response?.data?.message || 'Login failed.');
     }
@@ -162,10 +163,13 @@ function App() {
 
   return (
     <div id="main" className="main-class">
+      {/* Welcome, Register, and Login Pages */}
       {view === 'welcome' && <WelcomePage setView={setView} />}
       {view === 'register' && <RegisterPage registerUser={registerUser} setView={setView} />}
       {view === 'login' && <LoginPage loginUser={loginUser} setView={setView} />}
-      {view === 'home' && (
+  
+      {/* Header and Navbar - Shared Across Logged-In Views */}
+      {(view !== 'welcome' && view !== 'register' && view !== 'login') && (
         <>
           <Header
             showView={setView}
@@ -175,71 +179,75 @@ function App() {
             currentUser={currentUser}
             logout={logout}
           />
-          {/* <Navbar
+          <Navbar
             communities={communities}
             showCommunity={showCommunity}
             showview={setView}
             activeView={view}
             currentCommunity={currentCommunity}
+            currentUser={currentUser}
           />
-          <div id="front-page">
-            {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick} />}
-            {view === 'search' && (
-              <SearchView
-                matchingPosts={searchedPosts}
-                showPost={showPost}
-                localQuery={searchQuery}
-                communities={communities}
-                linkFlairs={linkFlairs}
-                formatTimestamp={formatTimestamp}
-                handlePostClick={handlePostClick}
-              />
-            )}
-            {view === 'createPost' && (
-              <CreatePost
-                communities={communities}
-                linkFlairs={linkFlairs}
-                fetchData={fetchData}
-                showHomePage={() => setView('home')}
-              />
-            )}
-            {view === 'createCommunity' && (
-              <CreateCommunity
-                showCommunity={showCommunity}
-                updateCommunityList={fetchData}
-              />
-            )}
-            {view === 'communitySection' && (
-              <CommunitySection
-                communityID={currentCommunity}
-                posts={posts}
-                comments={comments}
-                showPost={showPost}
-                handlePostClick={handlePostClick}
-              />
-            )}
-            {view === 'postSection' && (
-              <PostSection
-                postID={selectedPostID}
-                posts={posts}
-                comments={comments}
-                communities={communities}
-                showReplyPage={showReplyPage}
-              />
-            )}
-            {view === 'replyPage' && (
-              <NewReplyPage
-                postID={selectedPostID}
-                parentCommentID={parentCommentID}
-                fetchData={fetchData}
-                showPostSection={() => setView('postSection')}
-              />
-            )}
-          </div> */}
         </>
       )}
+  
+      {/* Main Content Views */}
+      <div id="front-page">
+        {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick} />}
+        {view === 'search' && (
+          <SearchView
+            matchingPosts={searchedPosts}
+            showPost={showPost}
+            localQuery={searchQuery}
+            communities={communities}
+            linkFlairs={linkFlairs}
+            formatTimestamp={formatTimestamp}
+            handlePostClick={handlePostClick}
+          />
+        )}
+        {view === 'createPost' && (
+          <CreatePost
+            communities={communities}
+            linkFlairs={linkFlairs}
+            fetchData={fetchData}
+            showHomePage={() => setView('home')}
+          />
+        )}
+        {view === 'createCommunity' && (
+          <CreateCommunity
+            showCommunity={showCommunity}
+            updateCommunityList={fetchData}
+          />
+        )}
+        {view === 'communitySection' && (
+          <CommunitySection
+            communityID={currentCommunity}
+            posts={posts}
+            comments={comments}
+            showPost={showPost}
+            handlePostClick={handlePostClick}
+          />
+        )}
+        {view === 'postSection' && (
+          <PostSection
+            postID={selectedPostID}
+            posts={posts}
+            comments={comments}
+            communities={communities}
+            showReplyPage={showReplyPage}
+          />
+        )}
+        {view === 'replyPage' && (
+          <NewReplyPage
+            postID={selectedPostID}
+            parentCommentID={parentCommentID}
+            fetchData={fetchData}
+            showPostSection={() => setView('postSection')}
+          />
+        )}
+      </div>
     </div>
   );
+  
 }
 
 export default App;

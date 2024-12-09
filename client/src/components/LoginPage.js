@@ -14,10 +14,12 @@ function LoginPage({ loginUser, setView }) {
 
         try {
             await loginUser(formData);
-            setView('home'); // Navigate to the home page after successful login
+            //setView('home'); // Navigate to the home page after successful login
         } catch (err) {
             setError('Error logging in.');
+            //setView('login');
         }
+        setFormData({ email: '', password: '' })
     };
 
     return (
