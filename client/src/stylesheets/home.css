@@ -1,0 +1,127 @@
+/*the homepage is subdivided into the community section, comment section, post section */
+
+/* Grid layout for the posts */
+
+#front-page {
+    grid-column: 2 / 6;
+    grid-row: 2 / 7;
+    background-color: white(240, 235, 235);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 10px; /* Space from borders */
+    grid-gap: 10px; /* Gap between top and posts */
+    max-height: 90vh; /* Ensure the page takes full viewport height */
+}
+
+/* Allow the post list to grow and take available space */
+.post-list {
+    display: flex;
+    flex-direction: column;
+    grid-gap: 0px; /* Gap between each post */
+    flex-grow: 1; /* Allow the post list to grow and fill available space */
+}
+
+/* Header section spanning all columns */
+/* #header-section { *header section is ALL posts and the post count*
+    grid-row: 1 / 4; * Spans all columns *
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+} */
+
+/*Header section is the one that contains ALL POSTS the number and the new/old buttons*/
+#header-section {
+    display: flex;
+    justify-content: space-between; /* Space out the title section and buttons */
+    align-items: flex-start; /* Align items at the start vertically */
+    margin-top: 10px;
+    margin-bottom: 0px; /* Optional spacing below the header */
+}*/
+
+#title-container {
+    display: flex;
+    flex-direction: column; /* Stack title and post count vertically */
+}
+
+#header-title {
+    margin: 0; /* Remove default margins */
+    font-family: 'Poppins', sans-serif; /* Apply the custom font */
+    font-size: 35px;
+}
+
+#post-count {
+    font-family: 'Poppins', sans-serif; /* Apply the custom font */
+
+    margin-top: 5px; /* Add a little spacing below the title */
+    font-size: 20px; /* Adjust font size for the post count */
+}
+
+#button-container {
+    display: flex;
+    gap: 10px; /* Adds space between buttons */
+}
+
+
+
+#button-container button {
+    padding: 10px 15px;
+    border: none;
+    background-color: #f0f0f0; /* Light grey background */
+    cursor: pointer;
+    border-radius: 5px; /* Rounded corners */
+}
+
+#button-container button:hover {
+    background-color: #FF4500; /* Reddish-orange on hover */
+    color: white; /* Change text color */
+}
+
+/*Header section ends*/
+
+.divider {
+    border-top: 2px solid black; /* Thin black line */
+    margin: 15px 0; /* Space around the line */
+}
+
+/* Post list container */
+.post-list{
+    display: flex;
+    flex-direction: column;
+    /* grid-gap:  10px; gap between each post */
+}
+
+/* this is the container for each post */
+#post-item {
+    /* border: 1px solid black; */
+    padding: 10px;
+    /* margin: 10px 0; */
+    border-radius: 5px;
+    background-color: white;
+    padding-bottom: 10px;
+    bottom: -20px;
+    border-bottom: 2px dotted #080101; /* Add the dotted line at the bottom of each post */
+}
+
+.post-item:last-child {
+    border-bottom: none; /* Remove the dotted line from the last post item */
+}
+
+#empty-container{
+    padding: 10px;
+}
+
+/* Add a bottom border with a thin dotted line */
+
+/* Sort buttons */
+/* .sort-button {
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+.sort-button:hover {
+    background-color: #FF4500;
+    color: white;
+} */

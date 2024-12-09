@@ -29,7 +29,7 @@ function RegisterPage({ registerUser, setView }) {
             setError('Password must not contain your first name, last name, display name, or email.');
             return;
         }
-        
+
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match.');
             return;
@@ -37,7 +37,7 @@ function RegisterPage({ registerUser, setView }) {
 
         try {
             await registerUser(formData);
-            setView('welcome'); // Redirect to the welcome page after successful registration
+            //setView('welcome'); // Redirect to the welcome page after successful registration
         } catch (err) {
             setError('Error registering user.');
         }

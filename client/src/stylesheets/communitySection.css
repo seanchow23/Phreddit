@@ -1,0 +1,86 @@
+#community-page {
+    grid-column: 2 / 6;
+    grid-row: 2 / 7;
+    background-color: white;
+    /* overflow-y: auto; */
+    display: flex;
+    flex-direction: column;
+    padding: 10px; /* Space from borders */
+    grid-gap: 10px; /* Gap between top and posts */
+    min-height: 100vh; /* Ensure the page takes full viewport height */
+}
+
+/* Header section for the community details */
+#community-header {
+    display: flex;
+    justify-content: space-between; /* Space out the title section and buttons */
+    align-items: flex-start; /* Align items at the start vertically */
+    margin-top: 10px;
+}
+
+#community-title {
+    font-size: 35px;
+    font-weight: bold;
+    font-family: 'Poppins', sans-serif;
+}
+
+#community-description {
+    font-size: 18px;
+    color: #666666;
+    font-family: 'Poppins', sans-serif;
+}
+
+#community-timestamp,
+#community-post-count {
+    font-size: 16px;
+    color: #888888;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Sort buttons container */
+#sort-button-container {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end; /* Align buttons to the right */
+}
+
+#sort-button-container button {
+    padding: 10px 15px;
+    border: none;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#sort-button-container button:hover {
+    background-color: #FF4500; /* Reddish-orange on hover */
+    color: white; /* Change text color */
+}
+
+/* Divider line below the header section */
+.divider {
+    border-top: 3px solid black; /* Dotted black line */
+    margin: 15px 0;
+}
+
+.post-list{
+    display: flex;
+    flex-direction: column;
+    grid-gap:  10px; /*gap between each post*/
+}
+
+/* Individual post styling */
+.post-item {
+    /* border: 1px solid black; */
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    padding-bottom: 20px;
+    bottom: -20px;
+    border-bottom: 2px dotted #080101; /* Add the dotted line at the bottom of each post */
+}
+
+.post-item:last-child {
+    border-bottom: none; /* Remove the dotted line from the last post item */
+}

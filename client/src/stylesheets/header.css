@@ -1,0 +1,96 @@
+/*Header (bannar) is the top it always stays there*/
+
+/*This makes the content inside the banner into 3 coloumns*/
+
+
+
+/* #header {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  } */
+
+  #header {
+
+    border-bottom: 2px solid black; /* Light border for subtle separation */
+    padding: 20px 0; /* Add padding to space out elements */
+}
+
+.banner-list {
+    list-style-type: none;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* Adjusted columns for title, search, and button */
+    grid-gap: 15px;
+    align-items: left;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding: 0;
+}
+
+
+.banner-item-title {
+    height: 40px; 
+    grid-column: 1 / 2;
+    font-size: 2.5em; /* Large title */
+    color: #FF4500; /* Purple color for the title */ /*this color is not showig up*/
+    font-weight: bold;
+    justify-content: flex-start; /* Aligns title to the left */
+    margin-top: 10px;
+}
+
+
+.title{
+    color: orangered; /*this changes the color of Phreddit*/
+    font-size: 27;
+    text-decoration: none; /*This removes the underline that was there because Phreddit is a link*/
+}
+
+.banner-item-search {
+    grid-column: 2 / 6;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+   
+    margin-top: 10px;
+}
+
+.banner-item-post {
+    grid-column: 6 / 7;
+    display: flex;
+    justify-content: flex-end; /* Align the button to the right */
+   
+    margin-top: 10px;
+}
+
+.search-box {
+    width: 100%; /* Make the search bar fill the grid cell */
+    max-width: 600px; /* Limit the maximum width */
+    height: 40px;
+    border-radius: 25px;
+    padding: 0 15px;
+    border: 1px solid #ccc;
+    font-size: 1.2em;
+}
+
+button {
+    height: 40px; /* Match the button height to the search box */
+    padding: 0 20px; /* Add padding for larger button */
+    border-radius: 25px;
+    border: 1px solid #333; /* Add a subtle border */
+    font-size: 1.2em; /* Increase font size */
+    cursor: pointer;
+}
+button:hover {
+    background-color: #FF4500;
+    color: white;
+}
+
+button.active{
+    background-color: #FF4500;
+    color: white;
+}
+
+.create-post-button.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  

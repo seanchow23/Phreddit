@@ -1,0 +1,34 @@
+#main {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* Sidebar and main content */
+    grid-template-rows: repeat(6,1fr); /* Header and rest of the content */
+    grid-gap: 0px;
+    height: 100%; /* Full viewport height */
+    overflow-y: hidden;
+    height: 100vh;
+}
+
+#main div{
+    padding: 20px;
+}
+
+#header {
+    grid-column: 1 / 6; /* Spanning across both columns */
+    grid-row: 1; /* Header takes the first row */
+    height: 100px; /* Example height, adjust as needed */
+}
+
+#nav {
+    grid-column: 1 / 2; /* Sidebar in the first column */
+    grid-row: 2/7; /* Nav below header */
+    height: calc(100vh - 100px); /* Adjust height based on header size */
+}
+
+#front-page {
+    grid-column: 2 / 6; /* Main content area in the second column */
+    grid-row: 2/7; /* Content below header */
+    overflow-y: auto; /**this adds a scroll to the front page*/
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px); /*Adjust height based on header size*/
+}

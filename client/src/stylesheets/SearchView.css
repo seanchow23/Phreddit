@@ -1,0 +1,32 @@
+#header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  #title-container {
+    flex-grow: 1;
+  }
+  
+  #button-container {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .sort-button {
+    padding: 5px 10px;
+    cursor: pointer;
+    background-color: #f4f4f4;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  .sort-button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .align-right {
+    justify-content: flex-end;
+  }
+  

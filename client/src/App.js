@@ -7,7 +7,7 @@ import axios from 'axios';
 import WelcomePage from './components/WelcomePage';
 import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
-// import Header from './components/Header';
+import Header from './components/Header';
 // import Home from './components/Home';
 // import CreatePost from './components/CreatePost';
 // import CreateCommunity from './components/CreateCommunity';
@@ -60,6 +60,14 @@ function App() {
     fetchData();
   }, []);
 
+
+  // Logout function
+  const logout = () => {
+    setCurrentUser(null); // Clear the user state
+    setView('welcome'); // Redirect to the welcome page
+  };
+
+  //register a given user, used in registerPage
   const registerUser = async (userData) => {
     try {
       const existingUser = users.find(user => user.email === userData.email || user.displayName === userData.displayName);
@@ -78,6 +86,7 @@ function App() {
     }
   };
 
+  //log in a given user, used in loginPage
   const loginUser = async (credentials) => {
     try {
       const existingUser = users.find(user => user.email === credentials.email);
@@ -156,15 +165,17 @@ function App() {
       {view === 'welcome' && <WelcomePage setView={setView} />}
       {view === 'register' && <RegisterPage registerUser={registerUser} setView={setView} />}
       {view === 'login' && <LoginPage loginUser={loginUser} setView={setView} />}
-      {/* {view === 'home' && (
+      {view === 'home' && (
         <>
           <Header
             showView={setView}
             currentView={view}
             setSearchedPosts={setSearchedPosts}
             setSearchQuery={setSearchQuery}
+            currentUser={currentUser}
+            logout={logout}
           />
-          <Navbar
+          {/* <Navbar
             communities={communities}
             showCommunity={showCommunity}
             showview={setView}
@@ -224,9 +235,9 @@ function App() {
                 showPostSection={() => setView('postSection')}
               />
             )}
-          </div>
+          </div> */}
         </>
-      )} */}
+      )}
     </div>
   );
 }
