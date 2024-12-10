@@ -192,7 +192,8 @@ function App() {
   
       {/* Main Content Views */}
       <div id="front-page">
-        {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick} />}
+        {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick}   currentUser={currentUser} // Pass currentUser as a prop
+ />}
         {view === 'search' && (
           <SearchView
             matchingPosts={searchedPosts}
@@ -234,6 +235,8 @@ function App() {
             comments={comments}
             communities={communities}
             showReplyPage={showReplyPage}
+            currentUser={currentUser} // Pass currentUser here
+
           />
         )}
         {view === 'replyPage' && (

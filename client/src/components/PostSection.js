@@ -2,76 +2,43 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NewReplyPage from './NewReplyPage';
 
-const PostSection = ({ postID, showPostSection, communities, showReplyPage }) => {
+const PostSection = ({ postID, showPostSection, communities, showReplyPage, currentUser }) => {
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
-  const [isReplying, setIsReplying] = useState(false);
-  const [linkFlair, setLinkFlair] = useState('');
-  const [parentCommentID, setParentCommentID] = useState(null);
   const [communityName, setCommunityName] = useState('');
 
-  // Fetch post and comments data from the server
   useEffect(() => {
     fetchPostData();
   }, [postID]);
 
   const fetchPostData = async () => {
-    console.log("Fetching post with ID:", postID);
     try {
       const postResponse = await axios.get(`http://localhost:8000/posts/${postID}`);
-      const fetchedPost = postResponse.data;
-      setPost(fetchedPost);
-      console.log("Fetched post:", fetchedPost);
+      setPost(postResponse.data);
 
-      // Fetch the community name
       const community = communities.find(c => c.postIDs.includes(postID));
       setCommunityName(community ? community.name : 'Unknown');
-
-      // Fetch link flair if it exists
-      if (fetchedPost.linkFlairID) {
-        const flairResponse = await axios.get(`http://localhost:8000/linkflairs`);
-        const matchedFlair = flairResponse.data.find(flair => flair._id === fetchedPost.linkFlairID);
-        if (matchedFlair) setLinkFlair(matchedFlair.content);
-      }
     } catch (err) {
-      console.error('Error fetching post', err);
-    }
-
-    console.log("Fetching comments for post:", postID);
-    try {
-      const commentsResponse = await axios.get(`http://localhost:8000/comments/${postID}`);
-      setComments(commentsResponse.data);
-    } catch (err) {
-      console.error('Error fetching comments:', err);
+      console.error('Error fetching post:', err);
     }
   };
 
-  // Helper function to render comments recursively
-  const renderComments = (commentIDs) => {
-    if (!commentIDs || commentIDs.length === 0) return null;
+  const handleUpvote = async (postId) => {
+    try {
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`);
+      setPost(response.data);
+    } catch (error) {
+      console.error('Error upvoting post:', error);
+    }
+  };
 
-    return (
-      <ul>
-        {commentIDs.map(commentID => {
-          const comment = comments.find(c => c._id === commentID);
-          if (!comment) return null;
-
-          return (
-            <li key={comment._id}>
-              <div>
-                <strong>{comment.commentedBy}</strong> ({formatTimestamp(comment.commentedDate)}):<br />
-                {comment.content}
-              </div>
-              {/* Reply Button */}
-              <button onClick={() => showReplyPage(postID, comment._id)}>Reply</button>
-
-              {/* Render replies for this comment */}
-              {renderComments(comment.commentIDs)}
-            </li>
-          );
-        })}
-      </ul>
-    );
+  const handleDownvote = async (postId) => {
+    try {
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`);
+      setPost(response.data);
+    } catch (error) {
+      console.error('Error downvoting post:', error);
+    }
   };
 
   if (!post) {
@@ -81,32 +48,36 @@ const PostSection = ({ postID, showPostSection, communities, showReplyPage }) =>
   return (
     <div id="post-section">
       <div className="post-container">
-        {/* Post Header */}
         <div className="post-header">
-          <div className="post-meta">
-            <span className="community-name">r/{communityName}</span>
-            <span className="separator"> | </span>
-            <span className="post-timestamp">{formatTimestamp(post.postedDate)}</span>
-          </div>
-
-          <p className="post-creator">Posted by {post.postedBy}</p>
-
-          <h1 className="post-title">{post.title}</h1>
-
-          {/* Link Flair */}
-          {linkFlair && <p className="post-flair">{linkFlair}</p>}
+          <span className="community-name">r/{communityName}</span>
+          <h1>{post.title}</h1>
         </div>
 
-        {/* Post Content */}
-        <div className="post-body">
-          <p className="post-content">{post.content}</p>
+        <div className="post-body">{post.content}</div>
+
+        <div className="post-stats">
+          <button
+            className={`vote-button upvote-button ${!currentUser ? 'disabled' : ''}`}
+            onClick={() => {
+              if (currentUser) handleUpvote(post._id);
+              else alert('You must be logged in to upvote.');
+            }}
+            disabled={!currentUser}
+          >
+            ▲
+          </button>
+          <span>{post.voteCount || 0}</span>
+          <button
+            className={`vote-button downvote-button ${!currentUser ? 'disabled' : ''}`}
+            onClick={() => {
+              if (currentUser) handleDownvote(post._id);
+              else alert('You must be logged in to downvote.');
+            }}
+            disabled={!currentUser}
+          >
+            ▼
+          </button>
         </div>
-
-        {/* Reply to Post Button */}
-        <button onClick={() => showReplyPage(postID)}>Reply to Post</button>
-
-        {/* Comments Section */}
-        {renderComments(post.commentIDs)}
       </div>
     </div>
   );

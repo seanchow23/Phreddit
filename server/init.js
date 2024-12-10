@@ -148,7 +148,7 @@ async function initializeDB() {
 
         console.log('Creating Posts...');
         const post1 = { title: 'AITJ: I parked my cybertruck...', content: 'Recently I went to the store...', postedBy: bigfeetUser._id, postedDate: new Date('August 23, 2024 01:19:00'), views: 14, linkFlairID: linkFlairRef1._id, commentIDs: [commentRef1._id, commentRef2._id] };
-        const post2 = { title: 'Remember when this was a HISTORY channel?', content: 'Does anyone else remember when...', postedBy: astyanaxUser._id, postedDate: new Date('September 9, 2024 14:24:00'), views: 1023, linkFlairID: linkFlairRef3._id, commentIDs: [commentRef4._id, commentRef5._id] };
+        const post2 = { title: 'Remember when this was a HISTORY channel?', content: 'Does anyone else remember when...', postedBy: astyanaxUser._id, postedDate: new Date('September 9, 2024 14:24:00'), views: 1023, linkFlairID: linkFlairRef3._id, commentIDs: [commentRef4._id, commentRef5._id], upvotes: 10 };
         let postRef1 = await createPost(post1);
         let postRef2 = await createPost(post2);
 

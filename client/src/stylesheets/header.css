@@ -93,4 +93,9 @@ button.active{
     background-color: #ccc;
     cursor: not-allowed;
   }
+
+  .user-profile{
+    display:flex;
+    margin-top: -25px;
+  }
   

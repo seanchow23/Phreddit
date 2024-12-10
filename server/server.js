@@ -273,6 +273,41 @@ app.get('/comments/:postID', async (req, res) => {
     }
 });
 
+// Upvote a post
+app.patch('/posts/:postID/upvote', async (req, res) => {
+  const { postID } = req.params;
+  
+  try {
+    const post = await PostModel.findById(postID);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    post.upvotes += 1;
+    post.voteCount = post.upvotes - post.downvotes;
+    await post.save();
+    res.status(200).json(post);
+    console.log(post);
+  } catch (err) {
+    console.error('Error upvoting post:', err);
+    res.status(500).json({ error: 'Failed to upvote post' });
+  }
+});
+
+// Downvote a post
+app.patch('/posts/:postID/downvote', async (req, res) => {
+  const { postID } = req.params;
+  try {
+    const post = await PostModel.findById(postID);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    post.downvotes += 1;
+    post.voteCount = post.upvotes - post.downvotes;
+    await post.save();
+    res.status(200).json(post);
+  } catch (err) {
+    console.error('Error downvoting post:', err);
+    res.status(500).json({ error: 'Failed to downvote post' });
+  }
+});
+
+
 const filterUniquePosts = (posts) => {
     const seen = {};
     const uniquePosts = [];

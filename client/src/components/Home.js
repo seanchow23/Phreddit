@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../stylesheets/home.css';
 
-function Home({ showView, handlePostClick }) {
+function Home({ showView, handlePostClick, currentUser}) {
   const [posts, setPosts] = useState([]);
   const [communities, setCommunities] = useState([]);
   const [comments, setComments] = useState([]);
   const [linkFlairs, setLinkFlairs] = useState([]);
   const [sortedPosts, setSortedPosts] = useState([]);
+  
 
   // Fetch posts, communities, comments, and link flairs from the server on component mount
   useEffect(() => {
@@ -70,6 +71,49 @@ function Home({ showView, handlePostClick }) {
     });
     setSortedPosts(sorted);
   };
+
+  const handleUpvote = async (postId) => {
+    try {
+      // Send upvote request to the backend
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`);
+      const updatedPost = response.data;
+  
+      // Update the posts state with the updated post
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => (post._id === postId ? updatedPost : post))
+      );
+  
+      // Update the sortedPosts state to reflect the updated vote count
+      setSortedPosts((prevSortedPosts) =>
+        prevSortedPosts.map((post) => (post._id === postId ? updatedPost : post))
+      );
+    } catch (error) {
+      console.error('Error upvoting post:', error.response?.data || error.message);
+      alert('Failed to upvote the post.');
+    }
+  };
+  
+  const handleDownvote = async (postId) => {
+    try {
+      // Send downvote request to the backend
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`);
+      const updatedPost = response.data;
+  
+      // Update the posts state with the updated post
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => (post._id === postId ? updatedPost : post))
+      );
+  
+      // Update the sortedPosts state to reflect the updated vote count
+      setSortedPosts((prevSortedPosts) =>
+        prevSortedPosts.map((post) => (post._id === postId ? updatedPost : post))
+      );
+    } catch (error) {
+      console.error('Error downvoting post:', error.response?.data || error.message);
+      alert('Failed to downvote the post.');
+    }
+  };
+  
 
   // Helper function to get the most recent comment date for a post
   const getMostRecentCommentDate = (post) => {
@@ -143,6 +187,38 @@ function Home({ showView, handlePostClick }) {
                   <span className="post-views">Views: {post.views || 0}</span>
                   <span className="separator"> | </span>
                   <span className="post-comments">Comments: {totalComments}</span>
+                  <div className="post-stats">
+                  <button
+    className={`vote-button upvote-button ${!currentUser ? 'disabled' : ''}`}
+    onClick={(e) => {
+      e.stopPropagation(); // Prevent post click event
+      if (currentUser) {
+        handleUpvote(post._id);
+      } else {
+        alert('You must be logged in to upvote.');
+      }
+    }}
+    disabled={!currentUser} // Disable button for guests
+  >
+    ▲
+  </button>
+  <span className="vote-count">{post.voteCount || 0}</span>
+  <button
+    className={`vote-button downvote-button ${!currentUser ? 'disabled' : ''}`}
+    onClick={(e) => {
+      e.stopPropagation(); // Prevent post click event
+      if (currentUser) {
+        handleDownvote(post._id);
+      } else {
+        alert('You must be logged in to downvote.');
+      }
+    }}
+    disabled={!currentUser} // Disable button for guests
+  >
+    ▼
+  </button>
+</div>
+
                 </div>
               </div>
             );
