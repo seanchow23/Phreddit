@@ -211,6 +211,7 @@ function App() {
             linkFlairs={linkFlairs}
             fetchData={fetchData}
             showHomePage={() => setView('home')}
+            currentUser={currentUser}
           />
         )}
         {view === 'createCommunity' && (
@@ -245,6 +246,7 @@ function App() {
             parentCommentID={parentCommentID}
             fetchData={fetchData}
             showPostSection={() => setView('postSection')}
+            currentUser={currentUser}
           />
         )}
       </div>
