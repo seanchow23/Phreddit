@@ -1,0 +1,48 @@
+[33mcommit c22779107f79525f2b775dae357f34041f8f0fcb[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Merge: 8c901d1 f0b6e94
+Author: Sean Chowdhury <sean.chowdhury@stonybrook.edu>
+Date:   Tue Dec 10 01:49:25 2024 -0500
+
+    Merge branch 'main' of https://github.com/sbu-ckane-f24-cse316-pa01org/project-hot_cocoa
+
+[33mcommit 8c901d1948aa72b20e855f2b98373f8c03905a10[m
+Author: Sean Chowdhury <sean.chowdhury@stonybrook.edu>
+Date:   Tue Dec 10 01:48:49 2024 -0500
+
+    sean upvote
+
+[33mcommit f0b6e944a330cf3520eecc6a6250a98ff25773c7[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: asafi07 <abassafi.ab@gmail.com>
+Date:   Tue Dec 10 01:45:30 2024 -0500
+
+    I am done
+
+[33mcommit 142738a0caf6ab8cdd1cef7151e8552b559ade66[m
+Author: asafi07 <abassafi.ab@gmail.com>
+Date:   Mon Dec 9 17:51:34 2024 -0500
+
+    THrid
+
+[33mcommit c1d60d647e12e9ef8cf16ee0fe51555fb10273e6[m
+Author: asafi07 <abassafi.ab@gmail.com>
+Date:   Mon Dec 9 00:03:58 2024 -0500
+
+    second
+
+[33mcommit 46e3a16cb25e89a71e7ac4e921e4fa1f78908e3a[m
+Author: asafi07 <abassafi.ab@gmail.com>
+Date:   Sun Dec 8 20:20:19 2024 -0500
+
+    first
+
+[33mcommit c30f1c8ce715ee10c9cdb1929d25aa82e0017ec3[m
+Author: github-classroom[bot] <66690702+github-classroom[bot]@users.noreply.github.com>
+Date:   Mon Nov 25 23:55:56 2024 +0000
+
+    add deadline
+
+[33mcommit fd76ebb08327499b3be6456ace82d8ecefb30282[m
+Author: github-classroom[bot] <66690702+github-classroom[bot]@users.noreply.github.com>
+Date:   Tue Nov 12 04:11:44 2024 +0000
+
+    Initial commit
