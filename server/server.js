@@ -234,7 +234,8 @@ app.get('/posts/:postID', async (req, res) => {
         res.status(500).send("Error fetching post");
     }
 });
-  
+
+
 
 // Get all posts
 app.get('/posts', async (req, res) => {
@@ -407,86 +408,85 @@ app.get('/comments', async (req, res) => {
 
 // Create a new comment
 app.post('/comments', async (req, res) => {
-    const { content, commentedBy, commentedDate, commentIDs, postID, parentCommentID } = req.body;
+  const { content, commentedBy, commentedDate, commentIDs, postID, parentCommentID } = req.body;
 
-      // Validate content length
-  if ( content.length > 500) {
-    return res.status(400).json({ error: 'Comment content must not exceed 500 characters.' });
+    // Validate content length
+if ( content.length > 500) {
+  return res.status(400).json({ error: 'Comment content must not exceed 500 characters.' });
+}
+
+
+  try {
+    const newComment = new CommentModel({
+      content,
+      commentedBy,
+      commentedDate,
+      commentIDs,
+      postID,
+      parentCommentID,
+    });
+    await newComment.save();
+    res.status(201).json(newComment);
+  } catch (err) {
+    console.error('Error creating comment:', err);
+    res.status(500).json({ error: 'Failed to create comment.' });
   }
+});
 
+// add comment to post
+app.patch('/posts/:postID', async (req, res) => {
+  const { newCommentID } = req.body;
+  try {
+    await PostModel.findByIdAndUpdate(req.params.postID, {
+      $push: { commentIDs: newCommentID }
+    });
+    res.status(200).send('Post updated');
+  } catch (err) {
+    console.error('Error updating post:', err);
+    res.status(500).send('Error updating post');
+  }
+});
 
-    try {
-      const newComment = new CommentModel({
-        content,
-        commentedBy,
-        commentedDate,
-        commentIDs,
-        postID,
-        parentCommentID,
-      });
-      await newComment.save();
-      res.status(201).json(newComment);
-    } catch (err) {
-      console.error('Error creating comment:', err);
-      res.status(500).json({ error: 'Failed to create comment.' });
-    }
-  });
-
-  // add comment to post
-  app.patch('/posts/:postID', async (req, res) => {
-    const { newCommentID } = req.body;
-    try {
-      await PostModel.findByIdAndUpdate(req.params.postID, {
-        $push: { commentIDs: newCommentID }
-      });
-      res.status(200).send('Post updated');
-    } catch (err) {
-      console.error('Error updating post:', err);
-      res.status(500).send('Error updating post');
-    }
-  });
-  
-  // Increment view count for a specific post
+// Increment view count for a specific post
 app.patch('/posts/:postID/views', async (req, res) => {
-    const { postID } = req.params;
-  
-    try {
-      const post = await PostModel.findByIdAndUpdate(
-        postID,
-        { $inc: { views: 1 } }, // Increment the views field
-        { new: true } // Return the updated document
-      );
-      if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
-      }
-      res.status(200).json(post);
-    } catch (err) {
-      console.error('Error incrementing post views:', err);
-      res.status(500).json({ error: 'Failed to increment views' });
+  const { postID } = req.params;
+
+  try {
+    const post = await PostModel.findByIdAndUpdate(
+      postID,
+      { $inc: { views: 1 } }, // Increment the views field
+      { new: true } // Return the updated document
+    );
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
     }
-  });
-  
+    res.status(200).json(post);
+  } catch (err) {
+    console.error('Error incrementing post views:', err);
+    res.status(500).json({ error: 'Failed to increment views' });
+  }
+});
 
 
 
 
 
-  // add comment to comment
-  app.patch('/comments/:commentID', async (req, res) => {
-    const { newCommentID } = req.body;
-    try {
-      await CommentModel.findByIdAndUpdate(req.params.commentID, {
-        $push: { commentIDs: newCommentID }
-      });
-      res.status(200).send('Comment updated');
-    } catch (err) {
-      console.error('Error updating comment:', err);
-      res.status(500).send('Error updating comment');
-    }
-  });
-  
 
-  
+// add comment to comment
+app.patch('/comments/:commentID', async (req, res) => {
+  const { newCommentID } = req.body;
+  try {
+    await CommentModel.findByIdAndUpdate(req.params.commentID, {
+      $push: { commentIDs: newCommentID }
+    });
+    res.status(200).send('Comment updated');
+  } catch (err) {
+    console.error('Error updating comment:', err);
+    res.status(500).send('Error updating comment');
+  }
+});
+
+
 // Get all link flairs
 app.get('/linkflairs', async (req, res) => {
     try {

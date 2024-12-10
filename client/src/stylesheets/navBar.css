@@ -82,3 +82,10 @@
     background-color: #298dc3; /* Phreddit reddish-orange or any suitable color */
     color: white;
 }
+
+.disabled {
+    background-color: #ccc;
+    color: #777;
+    cursor: not-allowed;
+    border: 1px solid #aaa;
+  }

@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-function CreatePost({ communities, linkFlairs, fetchData, showHomePage }) {
+function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentUser }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [community, setCommunity] = useState('');
-  const [username, setUsername] = useState('');
   const [flair, setFlair] = useState('');
   const [newFlair, setNewFlair] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Sort communities with joined ones first
+  const sortedCommunities = currentUser
+    ? [
+        ...communities.filter((community) => community.members.includes(currentUser._id)), // Joined communities
+        ...communities.filter((community) => !community.members.includes(currentUser._id)), // Unjoined communities
+      ]
+    : communities;
 
   // Function to handle creating a new post
   const handleCreatePost = async (e) => {
@@ -18,7 +25,7 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage }) {
     setError('');
 
     // Validate required fields
-    if (!title || !content || !community || !username) {
+    if (!title || !content || !community) {
       setError('All fields except flair are required.');
       setIsLoading(false);
       return;
@@ -26,7 +33,7 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage }) {
 
     // Prevent both flair options from being used
     if (flair && newFlair) {
-      setError('Error, cannot create post with two linkflairs');
+      setError('Error: Cannot create post with both a selected flair and a new flair.');
       setIsLoading(false);
       return;
     }
@@ -44,10 +51,10 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage }) {
         content,
         communityID: community,
         linkFlairID: flairID, // Optional flair ID
-        postedBy: username,
+        postedBy: currentUser.displayName, // Use the logged-in user's display name
         postedDate: new Date(),
         views: 0,
-        commentIDs: []
+        commentIDs: [],
       };
 
       // Send POST request to create a new post
@@ -60,7 +67,6 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage }) {
       setTitle('');
       setContent('');
       setCommunity('');
-      setUsername('');
       setFlair('');
       setNewFlair('');
 
@@ -88,21 +94,12 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage }) {
           required
         >
           <option value="">Select a community</option>
-          {communities?.map((community) => (
+          {sortedCommunities?.map((community) => (
             <option key={community._id} value={community._id}>
               {community.name}
             </option>
           ))}
         </select>
-
-        <label htmlFor="postUsername">Username: *</label>
-        <input
-          type="text"
-          id="postUsername"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
 
         <label htmlFor="postTitle">Post Title: *</label>
         <input
@@ -148,6 +145,9 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage }) {
 
         <button type="submit" disabled={isLoading}>
           {isLoading ? 'Creating...' : 'Submit Post'}
+        </button>
+        <button type="button" onClick={showHomePage}>
+          Cancel
         </button>
       </form>
     </div>

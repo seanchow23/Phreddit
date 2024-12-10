@@ -94,3 +94,8 @@ button.active{
     cursor: not-allowed;
   }
   
+
+  .user-profile{
+    display: flex;
+    margin-top: -25px;
+  }
