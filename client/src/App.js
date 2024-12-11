@@ -16,6 +16,8 @@ import PostSection from './components/PostSection';
 import SearchView from './components/SearchView';
 import Navbar from './components/Navbar';
 import NewReplyPage from './components/NewReplyPage';
+import UserProfile from './components/UserProfile'; // Import the UserProfile component
+
 import './stylesheets/main.css';
 import './stylesheets/home.css';
 import './stylesheets/header.css';
@@ -31,6 +33,7 @@ function App() {
   const [linkFlairs, setLinkFlairs] = useState([]);
   const [users, setUsers] = useState([]);
   const [currentCommunity, setCurrentCommunity] = useState(null);
+  const [communityToEdit, setCommunityToEdit] = useState(null);
   const [selectedPostID, setSelectedPostID] = useState(null);
   const [searchedPosts, setSearchedPosts] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,7 +185,8 @@ function App() {
       {view === 'welcome' && <WelcomePage setView={setView} />}
       {view === 'register' && <RegisterPage registerUser={registerUser} setView={setView} />}
       {view === 'login' && <LoginPage loginUser={loginUser} setView={setView} />}
-  
+      
+
       {/* Header and Navbar - Shared Across Logged-In Views */}
       {(view !== 'welcome' && view !== 'register' && view !== 'login') && (
         <>
@@ -194,6 +198,7 @@ function App() {
             currentUser={currentUser}
             logout={logout}
           />
+          
           <Navbar
             communities={communities}
             showCommunity={showCommunity}
@@ -205,11 +210,13 @@ function App() {
           />
         </>
       )}
-  
+
+      
+
       {/* Main Content Views */}
       <div id="front-page">
         {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick}   currentUser={currentUser}  users = {users}// Pass currentUser as a prop
- />}
+        />}
         {view === 'search' && (
           <SearchView
             matchingPosts={searchedPosts}
@@ -235,6 +242,9 @@ function App() {
             showCommunity={showCommunity}
             updateCommunityList={fetchData}
             currentUser={currentUser}
+            currentCommunity={communityToEdit}
+            setCurrentCommunity = {setCommunityToEdit}
+            showView={setView}
           />
         )}
         {view === 'communitySection' && (
@@ -270,6 +280,19 @@ function App() {
             currentUser={currentUser}
           />
         )}
+        {view === 'profile' && (
+            <UserProfile
+              currentUser={currentUser}
+              users={users}
+              communities={communities}
+              posts={posts}
+              comments={comments}
+              fetchData={fetchData}
+              showView={setView}
+              setCurrentCommunity = {setCommunityToEdit}
+              updateCommunityList={fetchData}
+            />
+          )}
       </div>
     </div>
   );

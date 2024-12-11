@@ -97,6 +97,37 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
+//fetch posts for specific user
+app.get('/users/:userID/posts', async (req, res) => {
+  try {
+    const posts = await PostModel.find({ postedBy: req.params.userID });
+    res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+});
+
+//fetch communities for a user
+app.get('/users/:userID/communities', async (req, res) => {
+  try {
+    const communities = await CommunityModel.find({ createdBy: req.params.userID });
+    res.status(200).json(communities);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch communities' });
+  }
+});
+
+//fetch comments by a user
+app.get('/users/:userID/comments', async (req, res) => {
+  try {
+    const comments = await CommentModel.find({ commentedBy: req.params.userID });
+    res.status(200).json(comments);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+
 // Fetch a specific user by ID
 app.get('/users/:id', async (req, res) => {
   try {
@@ -124,6 +155,113 @@ app.get('/users', async (req, res) => {
   });
   
 
+
+  // Deleting a comment and its replies
+app.delete('/comments/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch the comment
+    const comment = await CommentModel.findById(id);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Call deleteComment for all replies
+    for (const replyID of comment.commentIDs) {
+      await axios.delete(`http://localhost:8000/comments/${replyID}`);
+    }
+
+    // Delete the comment itself
+    await CommentModel.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'Comment and all associated replies deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting comment:', err);
+    res.status(500).json({ error: 'Failed to delete comment' });
+  }
+});
+
+// Deleting a post
+// Deleting a post
+app.delete('/posts/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the post to get its communityID
+    const post = await PostModel.findById(id);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Remove the post ID from the community's postIDs array
+    await CommunityModel.findByIdAndUpdate(post.communityID, {
+      $pull: { postIDs: id }
+    });
+
+    // Delete the post itself
+    await PostModel.findByIdAndDelete(id);
+
+    // Optionally, delete associated comments of the post
+    await CommentModel.deleteMany({ postID: id });
+
+    res.status(200).json({ message: 'Post and associated comments deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting post:', err);
+    res.status(500).json({ error: 'Failed to delete post' });
+  }
+});
+
+
+app.delete('/communities/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the community
+    const community = await CommunityModel.findById(id);
+    if (!community) {
+      return res.status(404).json({ error: 'Community not found' });
+    }
+
+    // Delete all posts and their comments associated with the community
+    for (const postID of community.postIDs) {
+      // Use the deletePost logic here
+      await PostModel.findByIdAndDelete(postID);
+      await CommentModel.deleteMany({ postID });
+    }
+
+    // Finally, delete the community
+    await CommunityModel.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'Community and all associated data deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting community:', err);
+    res.status(500).json({ error: 'Failed to delete community' });
+  }
+});
+
+
+//updating a community
+  app.patch('/communities/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+  
+    try {
+      const updatedCommunity = await CommunityModel.findByIdAndUpdate(
+        id,
+        { name, description },
+        { new: true }
+      );
+      if (!updatedCommunity) {
+        return res.status(404).json({ error: 'Community not found' });
+      }
+      res.status(200).json(updatedCommunity);
+    } catch (err) {
+      console.error('Error updating community:', err);
+      res.status(500).json({ error: 'Failed to update community' });
+    }
+  });
+  
 // joing a community
   app.patch('/communities/:communityID/join', async (req, res) => {
     const { userID } = req.body;
