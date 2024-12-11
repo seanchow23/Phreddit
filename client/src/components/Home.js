@@ -77,6 +77,8 @@ function Home({ showView, handlePostClick, currentUser}) {
       // Send upvote request to the backend
       const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`);
       const updatedPost = response.data;
+
+      console.log('final stuff', updatedPost);
   
       // Update the posts state with the updated post
       setPosts((prevPosts) =>
@@ -175,7 +177,7 @@ function Home({ showView, handlePostClick, currentUser}) {
                 <div className="post-meta">
                   <span className="community-name">r/{community.name}</span>
                   <span className="separator"> | </span>
-                  <span className="post-creator">Posted by {post.postedBy}</span>
+                  <span className="post-creator">Posted by {post.postedBy?.displayName||'unknown'}</span>
                   <span className="separator"> | </span>
                   <span className="post-timestamp">{formatTimestamp(post.postedDate)}</span>
                 </div>

@@ -51,11 +51,12 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentU
         content,
         communityID: community,
         linkFlairID: flairID, // Optional flair ID
-        postedBy: currentUser.displayName, // Use the logged-in user's display name
+        postedBy: currentUser._id, // Use the logged-in user's display name
         postedDate: new Date(),
         views: 0,
         commentIDs: [],
       };
+      console.log('Payload sent to server:', newPost);
 
       // Send POST request to create a new post
       await axios.post('http://localhost:8000/posts', newPost);

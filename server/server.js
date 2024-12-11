@@ -199,23 +199,34 @@ app.post('/communities', async (req, res) => {
 
 // Create a new post
 app.post('/posts', async (req, res) => {
-    const { title, content, communityID, linkFlairID, postedBy, postedDate, views, commentIDs } = req.body;
-    try {
-        const newPost = new PostModel({ title, content, communityID, linkFlairID: linkFlairID || null, postedBy, postedDate, views, commentIDs });
-        await newPost.save();
-  
-        // Update the community with the new postID
-        await CommunityModel.updateOne(
-          { _id: communityID },
-          { $push: { postIDs: newPost._id } }
-        );
-  
-        res.status(201).json(newPost);
-    } catch (err) {
-        console.error('Error creating post:', err);
-        res.status(500).json({ error: 'Failed to create post' });
-    }
-  });
+  const { title, content, communityID, linkFlairID, postedBy, postedDate, views, commentIDs } = req.body;
+  try {
+    const newPost = new PostModel({
+      title,
+      content,
+      communityID,
+      linkFlairID: linkFlairID || null,
+      postedBy,
+      postedDate,
+      views,
+      commentIDs,
+    });
+    await newPost.save();
+
+    // Update the community with the new postID
+    await CommunityModel.updateOne(
+      { _id: communityID },
+      { $push: { postIDs: newPost._id } }
+    );
+      
+
+    res.status(201).json(newPost);
+  } catch (err) {
+    console.error('Error creating post:', err);
+    res.status(500).json({ error: 'Failed to create post', details: err.message });
+  }
+});
+
   
 
 // Get a specific post by ID
@@ -223,7 +234,8 @@ app.get('/posts/:postID', async (req, res) => {
     console.log("Received request for post with ID:", req.params.postID); // Debugging log
     console.log("Route is being hit"); // Additional log
     try {
-        const post = await PostModel.findById(req.params.postID);
+      const post = await PostModel.findById(req.params.postID).populate('postedBy', 'displayName');
+        
         console.log("Post found:", post); // Debugging log
         if (!post) {
             return res.status(404).send("Post not found");
@@ -240,8 +252,8 @@ app.get('/posts/:postID', async (req, res) => {
 // Get all posts
 app.get('/posts', async (req, res) => {
     try {
-        const posts = await PostModel.find();
-        console.log(posts);
+      const posts = await PostModel.find().populate('postedBy', 'displayName');
+      console.log(posts);
         res.json(posts);
     } catch (err) {
         res.status(500).send("Error fetching posts");
@@ -277,15 +289,17 @@ app.get('/comments/:postID', async (req, res) => {
 // Upvote a post
 app.patch('/posts/:postID/upvote', async (req, res) => {
   const { postID } = req.params;
-  
+
   try {
-    const post = await PostModel.findById(postID);
-    if (!post) return res.status(404).json({ error: 'Post not found' });
-    post.upvotes += 1;
-    post.voteCount = post.upvotes - post.downvotes;
-    await post.save();
-    res.status(200).json(post);
-    console.log(post);
+    const updatedPost = await PostModel.findByIdAndUpdate(
+      postID,
+      { $inc: { upvotes: 1, voteCount: 1 } },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedPost) return res.status(404).json({ error: 'Post not found' });
+
+    res.status(200).json(updatedPost);
   } catch (err) {
     console.error('Error upvoting post:', err);
     res.status(500).json({ error: 'Failed to upvote post' });
@@ -295,18 +309,24 @@ app.patch('/posts/:postID/upvote', async (req, res) => {
 // Downvote a post
 app.patch('/posts/:postID/downvote', async (req, res) => {
   const { postID } = req.params;
+
   try {
-    const post = await PostModel.findById(postID);
-    if (!post) return res.status(404).json({ error: 'Post not found' });
-    post.downvotes += 1;
-    post.voteCount = post.upvotes - post.downvotes;
-    await post.save();
-    res.status(200).json(post);
+    // Use findByIdAndUpdate to atomically update downvotes and voteCount
+    const updatedPost = await PostModel.findByIdAndUpdate(
+      postID,
+      { $inc: { downvotes: 1, voteCount: -1 } }, // Increment downvotes and adjust voteCount
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedPost) return res.status(404).json({ error: 'Post not found' });
+
+    res.status(200).json(updatedPost); // Return the updated post
   } catch (err) {
     console.error('Error downvoting post:', err);
     res.status(500).json({ error: 'Failed to downvote post' });
   }
 });
+
 
 
 const filterUniquePosts = (posts) => {
@@ -508,16 +528,61 @@ app.patch('/posts/:postID/views', async (req, res) => {
 
 
 // add comment to comment
+// Upvote a comment
+app.patch('/comments/:commentID/upvote', async (req, res) => {
+  const { commentID } = req.params;
+  try {
+    const updatedComment = await CommentModel.findByIdAndUpdate(
+      commentID,
+      { $inc: { upvotes: 1, voteCount: 1 } },
+      { new: true } // Return the updated comment
+    );
+
+    if (!updatedComment) return res.status(404).json({ error: 'Comment not found' });
+
+    res.status(200).json(updatedComment);
+  } catch (err) {
+    console.error('Error upvoting comment:', err);
+    res.status(500).json({ error: 'Failed to upvote comment' });
+  }
+});
+
+// Downvote a comment
+app.patch('/comments/:commentID/downvote', async (req, res) => {
+  const { commentID } = req.params;
+  try {
+    const updatedComment = await CommentModel.findByIdAndUpdate(
+      commentID,
+      { $inc: { downvotes: 1, voteCount: -1 } },
+      { new: true } // Return the updated comment
+    );
+
+    if (!updatedComment) return res.status(404).json({ error: 'Comment not found' });
+
+    res.status(200).json(updatedComment);
+  } catch (err) {
+    console.error('Error downvoting comment:', err);
+    res.status(500).json({ error: 'Failed to downvote comment' });
+  }
+});
+
+// Add a reply to a specific comment
 app.patch('/comments/:commentID', async (req, res) => {
   const { newCommentID } = req.body;
+
   try {
-    await CommentModel.findByIdAndUpdate(req.params.commentID, {
-      $push: { commentIDs: newCommentID }
-    });
-    res.status(200).send('Comment updated');
+    const updatedComment = await CommentModel.findByIdAndUpdate(
+      req.params.commentID,
+      { $push: { commentIDs: newCommentID } }, // Add new comment ID to the parent comment's commentIDs
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedComment) return res.status(404).json({ error: 'Comment not found' });
+
+    res.status(200).json(updatedComment);
   } catch (err) {
-    console.error('Error updating comment:', err);
-    res.status(500).send('Error updating comment');
+    console.error('Error adding reply to comment:', err);
+    res.status(500).json({ error: 'Failed to add reply to comment' });
   }
 });
 
