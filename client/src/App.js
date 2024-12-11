@@ -219,6 +219,10 @@ function App() {
             linkFlairs={linkFlairs}
             formatTimestamp={formatTimestamp}
             handlePostClick={handlePostClick}
+            currentUser={currentUser}
+            users={users || []} // Ensure it's never undefined
+
+
           />
         )}
         {view === 'createPost' && (

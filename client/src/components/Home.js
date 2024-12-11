@@ -81,7 +81,11 @@ function Home({ showView, handlePostClick, currentUser}) {
   const handleUpvote = async (postId) => {
     try {
       // Send upvote request to the backend
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`);
+      const response = await axios.patch(
+        `http://localhost:8000/posts/${postId}/upvote`
+,        { userID: currentUser._id } // Include the voter ID
+
+      );
       const updatedPost = response.data;
 
       console.log('final stuff', updatedPost);
@@ -96,15 +100,23 @@ function Home({ showView, handlePostClick, currentUser}) {
         prevSortedPosts.map((post) => (post._id === postId ? updatedPost : post))
       );
     } catch (error) {
+
+      if (error.response?.status === 403) {
+        // Directly alert the user
+        alert(error.response.data.error || 'Your reputation is too low to upvote.');
+      }
       console.error('Error upvoting post:', error.response?.data || error.message);
-      alert('Failed to upvote the post.');
+      //alert('Failed to upvote the post.');
     }
   };
   
   const handleDownvote = async (postId) => {
     try {
       // Send downvote request to the backend
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`);
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`,
+        { userID: currentUser._id } // Include the voter ID
+
+      );
       const updatedPost = response.data;
   
       // Update the posts state with the updated post
@@ -117,8 +129,12 @@ function Home({ showView, handlePostClick, currentUser}) {
         prevSortedPosts.map((post) => (post._id === postId ? updatedPost : post))
       );
     } catch (error) {
+      
+      if (error.response?.status === 403) {
+        // Directly alert the user
+        alert(error.response.data.error || 'Your reputation is too low to upvote.');
+      }
       console.error('Error downvoting post:', error.response?.data || error.message);
-      alert('Failed to downvote the post.');
     }
   };
   
@@ -189,6 +205,8 @@ function Home({ showView, handlePostClick, currentUser}) {
                   <span className="separator"> | </span>
                   <span className="post-creator">Posted by {creator}</span>
                   <span className="separator"> | </span>
+                  Posted by {creator} (Reputation: {users.find(u => u._id === post.postedBy)?.reputation || 0})
+
                   <span className="post-timestamp">{formatTimestamp(post.postedDate)}</span>
                 </div>
 
