@@ -46,7 +46,7 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
   // Handle upvote
   const handleUpvote = async (postId) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`);
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`,  { userID: currentUser._id } );
       const updatedPost = response.data;
 
       // Update sortedPosts with the updated post
@@ -62,7 +62,7 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
   // Handle downvote
   const handleDownvote = async (postId) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`);
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`, { userID: currentUser._id } );
       const updatedPost = response.data;
 
       // Update sortedPosts with the updated post
