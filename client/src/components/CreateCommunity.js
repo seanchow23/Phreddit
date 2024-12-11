@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-function CreateCommunity({ updateCommunityList, showCommunity }) {
+function CreateCommunity({ updateCommunityList, showCommunity, currentUser }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [username, setUsername] = useState('');
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -15,16 +14,12 @@ function CreateCommunity({ updateCommunityList, showCommunity }) {
     if (!name || name.length > 100) {
       errors.name = "Name is required and should be less than 100 characters.";
     }
-    if (!description || description.length > 500) {
-      errors.description = "Description is required and should be less than 500 characters.";
-    }
-    if (!username) {
-      errors.username = "Username is required.";
+    if (!description || description.length > 500 || description.length < 10) {
+      errors.description = "Description is required and should be less than 500 characters and greater then 10.";
     }
     return errors;
   };
 
-  
   // Function to handle creating a new community
   const handleCreateCommunity = async (e) => {
     e.preventDefault();
@@ -42,7 +37,8 @@ function CreateCommunity({ updateCommunityList, showCommunity }) {
       name,
       description,
       postIDs: [],
-      members: [username],
+      members: [currentUser._id], // Use currentUser's ID as the initial member
+      createdBy: currentUser._id,
       memberCount: 1,
       startDate: new Date(),
     };
@@ -59,7 +55,6 @@ function CreateCommunity({ updateCommunityList, showCommunity }) {
       setSuccessMessage('Community created successfully!');
       setName('');
       setDescription('');
-      setUsername('');
 
       // Navigate to the new community view
       showCommunity(response.data._id);
@@ -96,15 +91,6 @@ function CreateCommunity({ updateCommunityList, showCommunity }) {
           required
         />
         {errors.description && <p className="error">{errors.description}</p>}
-
-        <label>Username <span className="required">*</span></label>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        {errors.username && <p className="error">{errors.username}</p>}
 
         {errors.server && <p className="error">{errors.server}</p>}
 

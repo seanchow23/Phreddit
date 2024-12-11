@@ -8,6 +8,7 @@ function Home({ showView, handlePostClick }) {
   const [comments, setComments] = useState([]);
   const [linkFlairs, setLinkFlairs] = useState([]);
   const [sortedPosts, setSortedPosts] = useState([]);
+  const [users, setUsers] = useState([]);
 
   // Fetch posts, communities, comments, and link flairs from the server on component mount
   useEffect(() => {
@@ -17,11 +18,12 @@ function Home({ showView, handlePostClick }) {
   // Fetch data from the server
   const fetchAllData = async () => {
     try {
-      const [postsRes, communitiesRes, commentsRes, linkFlairsRes] = await Promise.all([
+      const [postsRes, communitiesRes, commentsRes, linkFlairsRes, usersRes] = await Promise.all([
         axios.get('http://localhost:8000/posts'),
         axios.get('http://localhost:8000/communities'),
         axios.get('http://localhost:8000/comments'),
         axios.get('http://localhost:8000/linkflairs'),
+        axios.get(`http://localhost:8000/users`),
       ]);
 
       setPosts(postsRes.data);
@@ -29,14 +31,19 @@ function Home({ showView, handlePostClick }) {
       setCommunities(communitiesRes.data);
       setComments(commentsRes.data);
       setLinkFlairs(linkFlairsRes.data);
+      setUsers(usersRes.data);
 
 
       const sortedByNewest = postsRes.data.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
     setSortedPosts(sortedByNewest);
+
+      
+
     } catch (err) {
       console.error('Error fetching data:', err);
     }
   };
+  
 
   // Format the timestamp for relative time display
   const formatTimestamp = (postedDate) => {
@@ -123,15 +130,19 @@ function Home({ showView, handlePostClick }) {
               ? linkFlairs.find(l => l._id === post.linkFlairID)?.content || '' 
               : '';
 
+            const creator = post.postedBy
+            ? users.find(u => u._id === post.postedBy)?.displayName || '' 
+            : '';
             // Get total comments including replies
             const totalComments = countCommentsAndReplies(post.commentIDs);
+            
 
             return (
               <div key={post._id} id="post-item" onClick={() => handlePostClick(post._id)}>
                 <div className="post-meta">
                   <span className="community-name">r/{community.name}</span>
                   <span className="separator"> | </span>
-                  <span className="post-creator">Posted by {post.postedBy}</span>
+                  <span className="post-creator">Posted by {creator}</span>
                   <span className="separator"> | </span>
                   <span className="post-timestamp">{formatTimestamp(post.postedDate)}</span>
                 </div>

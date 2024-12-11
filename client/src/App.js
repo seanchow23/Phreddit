@@ -161,6 +161,21 @@ function App() {
   };
   
 
+  const handleCommunityChange = async (communityID, action) => {
+    try {
+      // Update the community membership on the server
+      const url = `http://localhost:8000/communities/${communityID}/${action}`;
+      await axios.patch(url, { userID: currentUser._id });
+  
+      // Fetch updated communities
+      const response = await axios.get('http://localhost:8000/communities');
+      setCommunities(response.data); // Update state with refreshed data
+    } catch (err) {
+      console.error(`Error ${action} community:`, err);
+    }
+  };
+
+  
   return (
     <div id="main" className="main-class">
       {/* Welcome, Register, and Login Pages */}
@@ -186,13 +201,14 @@ function App() {
             activeView={view}
             currentCommunity={currentCommunity}
             currentUser={currentUser}
+            handleCommunityChange = {handleCommunityChange}
           />
         </>
       )}
   
       {/* Main Content Views */}
       <div id="front-page">
-        {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick} />}
+        {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick} users = {users} />}
         {view === 'search' && (
           <SearchView
             matchingPosts={searchedPosts}
@@ -217,6 +233,7 @@ function App() {
           <CreateCommunity
             showCommunity={showCommunity}
             updateCommunityList={fetchData}
+            currentUser={currentUser}
           />
         )}
         {view === 'communitySection' && (
@@ -226,6 +243,9 @@ function App() {
             comments={comments}
             showPost={showPost}
             handlePostClick={handlePostClick}
+            currentUser={currentUser}
+            users = {users}
+            handleCommunityChange = {handleCommunityChange}
           />
         )}
         {view === 'postSection' && (
@@ -235,6 +255,7 @@ function App() {
             comments={comments}
             communities={communities}
             showReplyPage={showReplyPage}
+            users = {users}
           />
         )}
         {view === 'replyPage' && (

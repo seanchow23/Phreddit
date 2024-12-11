@@ -21,7 +21,7 @@ function NewReplyPage({ postID, parentCommentID, fetchData, showPostSection, cur
             // Create a new comment object
             const newComment = {
                 content,
-                commentedBy: currentUser, // Automatically set to the logged-in user's display name
+                commentedBy: currentUser._id, // Automatically set to the logged-in user's display name
                 commentedDate: new Date(),
                 commentIDs: [],
                 postID: postID,
