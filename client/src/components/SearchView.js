@@ -127,7 +127,7 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
                 {/* Upvote/Downvote Section */}
                 <div className="vote-section">
                   <button
-                    className={`vote-button upvote-button ${!currentUser ? 'disabled' : ''}`}
+                    className={`vote-button upvote-button ' }`}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent post click event
                       if (currentUser) {
