@@ -6,6 +6,7 @@ const CommunitySchema = new Schema({
     description: { type: String, required: true, minlength: 10, maxlength: 500 },
     postIDs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }], // References to posts in the community
     startDate: { type: Date, default: Date.now }, // Automatically sets community creation date
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // List of user references
     //moderators: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Optional: List of moderator references
     memberCount: { type: Number, default: 0 }, // Automatically tracks member count

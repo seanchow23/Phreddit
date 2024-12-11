@@ -98,6 +98,7 @@ function createCommunity(communityObj) {
         name: communityObj.name,
         description: communityObj.description,
         postIDs: communityObj.postIDs,
+        createdBy: communityObj.createdBy,
         startDate: communityObj.startDate,
         members: communityObj.members,
         memberCount: communityObj.memberCount || 0,
@@ -153,8 +154,8 @@ async function initializeDB() {
         let postRef2 = await createPost(post2);
 
         console.log('Creating Communities...');
-        const community1 = { name: 'Am I the Jerk?', description: 'A practical application of...', postIDs: [postRef1._id], startDate: new Date('August 10, 2014 04:18:00'), members: [rolloUser._id, shempUser._id, astyanaxUser._id, bigfeetUser._id], memberCount: 4 };
-        const community2 = { name: 'The History Channel', description: 'A fantastical reimagining...', postIDs: [postRef2._id], startDate: new Date('May 4, 2017 08:32:00'), members: [astyanaxUser._id, outtheretruthUser._id, bigfeetUser._id], memberCount: 3 };
+        const community1 = { name: 'Am I the Jerk?', description: 'A practical application of...', postIDs: [postRef1._id], startDate: new Date('August 10, 2014 04:18:00'), createdBy: rolloUser._id ,members: [rolloUser._id, shempUser._id, astyanaxUser._id, bigfeetUser._id], memberCount: 4 };
+        const community2 = { name: 'The History Channel', description: 'A fantastical reimagining...', postIDs: [postRef2._id],  startDate: new Date('May 4, 2017 08:32:00'), createdBy: astyanaxUser._id , members: [astyanaxUser._id, outtheretruthUser._id, bigfeetUser._id], memberCount: 3 };
         await createCommunity(community1);
         await createCommunity(community2);
 

@@ -2,39 +2,43 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../stylesheets/communitySection.css';
 
-const CommunitySection = ({ communityID, handlePostClick }) => {
+const CommunitySection = ({ communityID, handlePostClick, currentUser, users, handleCommunityChange }) => {
   const [community, setCommunity] = useState(null);
   const [posts, setPosts] = useState([]);
   const [comments, setComments] = useState([]);
   const [linkFlairs, setLinkFlairs] = useState([]);
+  const [creatorName, setCreatorName] = useState('');
   const [sortOption, setSortOption] = useState('newest');
 
-  // Fetch community data on component mount
   useEffect(() => {
     fetchCommunityData();
     fetchLinkFlairs();
   }, [communityID]);
 
-  // Fetch community and posts data
   const fetchCommunityData = async () => {
     try {
-      // Fetch the community details
-      const communityResponse = await axios.get(`http://localhost:8000/communities/${communityID}`);
-      setCommunity(communityResponse.data);
+        // Fetch the community details
+        const communityResponse = await axios.get(`http://localhost:8000/communities/${communityID}`);
+        const fetchedCommunity = communityResponse.data;
+        setCommunity(fetchedCommunity);
 
-      // Fetch posts for this community
-      const postsResponse = await axios.get(`http://localhost:8000/communities/${communityID}/posts`);
-      setPosts(postsResponse.data);
+        // Find the creator's display name from the users
+        const creator = users.find(user => user._id === fetchedCommunity.createdBy);
+        setCreatorName(creator ? creator.displayName : 'Unknown');
 
-      // Fetch comments for each post
-      const allComments = await fetchCommentsForPosts(postsResponse.data);
-      setComments(allComments);
+        // Fetch posts for this community
+        const postsResponse = await axios.get(`http://localhost:8000/communities/${communityID}/posts`);
+        setPosts(postsResponse.data);
+
+        // Fetch comments for each post
+        const allComments = await fetchCommentsForPosts(postsResponse.data);
+        setComments(allComments);
     } catch (err) {
-      console.error("Error fetching community or posts:", err);
+        console.error("Error fetching community or posts:", err);
     }
-  };
+};
 
-  // Fetch link flairs
+
   const fetchLinkFlairs = async () => {
     try {
       const flairsResponse = await axios.get('http://localhost:8000/linkflairs');
@@ -44,7 +48,6 @@ const CommunitySection = ({ communityID, handlePostClick }) => {
     }
   };
 
-  // Fetch comments for each post in the community
   const fetchCommentsForPosts = async (posts) => {
     let allComments = [];
     for (const post of posts) {
@@ -58,7 +61,26 @@ const CommunitySection = ({ communityID, handlePostClick }) => {
     return allComments;
   };
 
-  // Helper function to sort posts
+  const handleJoinCommunity = async () => {
+    try {
+      //await axios.patch(`http://localhost:8000/communities/${communityID}/join`, { userID: currentUser._id });
+      await handleCommunityChange(communityID, 'join');
+      fetchCommunityData(); // Refresh community data
+    } catch (err) {
+      console.error("Error joining community:", err);
+    }
+  };
+
+  const handleLeaveCommunity = async () => {
+    try {
+      //await axios.patch(`http://localhost:8000/communities/${communityID}/leave`, { userID: currentUser._id });
+      await handleCommunityChange(communityID, 'leave');
+      fetchCommunityData(); // Refresh community data
+    } catch (err) {
+      console.error("Error leaving community:", err);
+    }
+  };
+
   const getSortedPosts = () => {
     switch (sortOption) {
       case 'newest':
@@ -76,11 +98,9 @@ const CommunitySection = ({ communityID, handlePostClick }) => {
     }
   };
 
-  // Helper function to get the most recent comment date for a post
   const getMostRecentCommentDate = (post) => {
     const postComments = comments.filter(comment => comment.postID === post._id);
     if (postComments.length === 0) return new Date(0);
-
     const mostRecentComment = postComments.sort((a, b) => new Date(b.commentedDate) - new Date(a.commentedDate))[0];
     return mostRecentComment ? mostRecentComment.commentedDate : new Date(0);
   };
@@ -89,7 +109,6 @@ const CommunitySection = ({ communityID, handlePostClick }) => {
 
   const sortedPosts = getSortedPosts();
 
-  // Helper function to count comments and replies recursively
   const countCommentsAndReplies = (commentIDs) => {
     let totalComments = 0;
     commentIDs.forEach(commentID => {
@@ -104,15 +123,13 @@ const CommunitySection = ({ communityID, handlePostClick }) => {
     return totalComments;
   };
 
-
+  const isMember = currentUser && community.members.includes(currentUser._id);
 
   return (
     <div id="community-page">
-      {/* Community Header */}
       <div id="community-header-section">
         <div id="community-header">
           <h1 id="community-name">r/{community.name}</h1>
-          {/* Sort Buttons */}
           <div id="button-container">
             <button className="sort-button" onClick={() => setSortOption('newest')}>Newest</button>
             <button className="sort-button" onClick={() => setSortOption('oldest')}>Oldest</button>
@@ -120,56 +137,52 @@ const CommunitySection = ({ communityID, handlePostClick }) => {
           </div>
         </div>
         <p id="community-description">{community.description}</p>
-        <p id="community-age">Created {formatTimestamp(community.startDate)}</p>
+        <p id="community-age">Created {formatTimestamp(community.startDate)} by {creatorName}</p>
         <p id="community-info">
           <span>{sortedPosts.length} Posts</span> | <span>{community.memberCount || 0} Members</span>
         </p>
+        {currentUser && (
+          isMember ? (
+            <button onClick={handleLeaveCommunity} className="leave-button">Leave Community</button>
+          ) : (
+            <button onClick={handleJoinCommunity} className="join-button">Join Community</button>
+          )
+        )}
       </div>
-
       <div className="divider" />
-
-      {/* List of Posts in Community */}
       <div className="post-list">
         {sortedPosts.map(post => {
-          const truncatedContent = post.content.substring(0, 80) + '...';
+          const flair = post.linkFlairID ? linkFlairs.find(flair => flair._id === post.linkFlairID)?.content || '' : '';
+          // get the creater of the post
+          const creator = post.postedBy
+          ? users.find(u => u._id === post.postedBy)?.displayName || '' 
+          : '';
 
-          // Fetch the link flair content based on the post's linkFlairID
-          const flair = post.linkFlairID
-            ? linkFlairs.find(flair => flair._id === post.linkFlairID)?.content || ''
-            : '';
-
-            // Get total comments including replies
-            const totalComments = countCommentsAndReplies(post.commentIDs);
-
+          const totalComments = countCommentsAndReplies(post.commentIDs);
           return (
             <div key={post._id} className="post-item" onClick={() => handlePostClick(post._id)}>
               <div className="post-meta">
-                <span className="post-creator">Posted by {post.postedBy}</span>
+                <span className="post-creator">Posted by {creator}</span>
                 <span className="separator"> | </span>
                 <span className="post-timestamp">{formatTimestamp(post.postedDate)}</span>
               </div>
               <h2 className="post-title">{post.title}</h2>
               {flair && <p className="post-flair">{flair}</p>}
-              <p className="post-content">{truncatedContent}</p>
+              <p className="post-content">{post.content.substring(0, 80)}...</p>
               <div className="post-stats">
                 <span className="post-views">Views: {post.views || 0}</span>
                 <span className="separator"> | </span>
-                <span className="post-comments">
-                  Comments: {totalComments}
-                </span>
+                <span className="post-comments">Comments: {totalComments}</span>
               </div>
             </div>
           );
         })}
       </div>
-      <div id="empty-container"></div>
+      <div id= "empty-container"></div>
     </div>
   );
 };
-//removing the empty container causes the posts to be cut off
 
-
-// Helper function to format timestamps
 const formatTimestamp = (timestamp) => {
   const now = new Date();
   const diffInSeconds = Math.floor((now - new Date(timestamp)) / 1000);
@@ -181,6 +194,4 @@ const formatTimestamp = (timestamp) => {
   return `${Math.floor(diffInSeconds / 31536000)} years ago`;
 };
 
-
 export default CommunitySection;
-//take care of handlepostclick

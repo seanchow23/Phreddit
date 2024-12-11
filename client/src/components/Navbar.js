@@ -8,6 +8,7 @@ const Navbar = ({
   activeView, 
   currentCommunity, 
   currentUser 
+  
 }) => {
   // Sort communities for logged-in users, placing joined communities at the top
   const sortedCommunities = currentUser

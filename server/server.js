@@ -97,6 +97,21 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
+// Fetch a specific user by ID
+app.get('/users/:id', async (req, res) => {
+  try {
+      const user = await UserModel.findById(req.params.id, '-password'); // Exclude password field
+      if (!user) {
+          return res.status(404).json({ message: 'User not found.' });
+      }
+      res.status(200).json(user);
+  } catch (err) {
+      console.error('Error fetching user:', err);
+      res.status(500).json({ message: 'Error fetching user.' });
+  }
+});
+
+
 // Fetch all users
 app.get('/users', async (req, res) => {
     try {
@@ -108,6 +123,31 @@ app.get('/users', async (req, res) => {
     }
   });
   
+
+// joing a community
+  app.patch('/communities/:communityID/join', async (req, res) => {
+    const { userID } = req.body;
+    try {
+        await CommunityModel.findByIdAndUpdate(req.params.communityID, { $addToSet: { members: userID }, $inc: { memberCount: 1 } });
+        res.status(200).send('Joined community successfully');
+    } catch (err) {
+        console.error('Error joining community:', err);
+        res.status(500).send('Failed to join community');
+    }
+});
+
+// leave a community
+app.patch('/communities/:communityID/leave', async (req, res) => {
+    const { userID } = req.body;
+    try {
+        await CommunityModel.findByIdAndUpdate(req.params.communityID, { $pull: { members: userID }, $inc: { memberCount: -1 } });
+        res.status(200).send('Left community successfully');
+    } catch (err) {
+        console.error('Error leaving community:', err);
+        res.status(500).send('Failed to leave community');
+    }
+});
+
 
 // Get posts for a specific community using the postIDs array
 app.get('/communities/:communityID/posts', async (req, res) => {
@@ -155,44 +195,54 @@ app.get('/communities', async (req, res) => {
 
 // Create a new community
 app.post('/communities', async (req, res) => {
-    const { name, description, members } = req.body;
+  const { name, description, members, createdBy } = req.body; // Include `createdBy` from the request
 
-    // Validate request body
-    if (!name || name.length > 100) {
-        return res.status(400).json({ error: 'Community name is required and should be less than 100 characters.' });
-    }
-   
-    if (!Array.isArray(members) || members.length === 0) {
-        return res.status(400).json({ error: 'Members must be a non-empty array.' });
-    }
+  // Validate request body
+  if (!name || name.length > 100) {
+      console.error("Community name length is too long");
+      return res.status(400).json({ error: 'Community name is required and should be less than 100 characters.' });
+  }
+  if (!description || description.length < 10) {
+      console.error("Community description length is too short");
+      return res.status(400).json({ error: 'Community description is required and should be more than 10 characters.' });
+  }
+  if (!Array.isArray(members) || members.length === 0) {
+      return res.status(400).json({ error: 'Members must be a non-empty array.' });
+  }
+  if (!createdBy) {
+      console.error("CreatedBy is missing");
+      return res.status(400).json({ error: 'CreatedBy is required.' });
+  }
 
-    try {
-        // Check if a community with the same name already exists
-        const existingCommunity = await CommunityModel.findOne({ name });
-        if (existingCommunity) {
-            return res.status(409).json({ error: 'Community with this name already exists.' });
-        }
+  try {
+      // Check if a community with the same name already exists
+      const existingCommunity = await CommunityModel.findOne({ name });
+      if (existingCommunity) {
+          return res.status(409).json({ error: 'Community with this name already exists.' });
+      }
 
-        // Create a new community instance
-        const newCommunity = new CommunityModel({
-            name,
-            description,
-            members,
-            memberCount: members.length,
-            postIDs: [],
-            startDate: new Date(),
-        });
+      // Create a new community instance
+      const newCommunity = new CommunityModel({
+          name,
+          description,
+          members,
+          createdBy, // Add the creator ID here
+          memberCount: members.length,
+          postIDs: [],
+          startDate: new Date(),
+      });
 
-        // Save to MongoDB
-        await newCommunity.save();
+      // Save to MongoDB
+      await newCommunity.save();
 
-        // Return the created community
-        res.status(201).json(newCommunity);
-    } catch (err) {
-        console.error('Error creating community:', err);
-        res.status(500).json({ error: 'Failed to create community' });
-    }
+      // Return the created community
+      res.status(201).json(newCommunity);
+  } catch (err) {
+      console.error('Error creating community:', err);
+      res.status(500).json({ error: 'Failed to create community' });
+  }
 });
+
 
 
 
@@ -252,7 +302,7 @@ app.get('/posts/:postID', async (req, res) => {
 // Get all posts
 app.get('/posts', async (req, res) => {
     try {
-      const posts = await PostModel.find().populate('postedBy', 'displayName');
+      const posts = await PostModel.find();
       console.log(posts);
         res.json(posts);
     } catch (err) {

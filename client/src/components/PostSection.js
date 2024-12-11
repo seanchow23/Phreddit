@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NewReplyPage from './NewReplyPage';
 
-const PostSection = ({ postID, showPostSection, communities, showReplyPage   ,currentUser // Pass currentUser here
+const PostSection = ({ postID, showPostSection, communities, showReplyPage   ,currentUser, users // Pass currentUser here
 }) => {
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -10,6 +10,8 @@ const PostSection = ({ postID, showPostSection, communities, showReplyPage   ,cu
   const [linkFlair, setLinkFlair] = useState('');
   const [parentCommentID, setParentCommentID] = useState(null);
   const [communityName, setCommunityName] = useState('');
+  //const [postCreator, setPostCreator] = useState('');
+
 
 
   // Fetch post and comments data from the server
@@ -40,33 +42,39 @@ const handleDownvote = async (postId) => {
   const fetchPostData = async () => {
     console.log("Fetching post with ID:", postID);
     try {
-      const postResponse = await axios.get(`http://localhost:8000/posts/${postID}`);
-      const fetchedPost = postResponse.data;
-      setPost(fetchedPost);
-      console.log("Fetched post:", fetchedPost);
+        const postResponse = await axios.get(`http://localhost:8000/posts/${postID}`);
+        const fetchedPost = postResponse.data;
+        setPost(fetchedPost);
+        console.log("Fetched post:", fetchedPost);
 
-      // Fetch the community name
-      const community = communities.find(c => c.postIDs.includes(postID));
-      setCommunityName(community ? community.name : 'Unknown');
+        // Fetch the community name
+        const community = communities.find(c => c.postIDs.includes(postID));
+        setCommunityName(community ? community.name : 'Unknown');
 
-      // Fetch link flair if it exists
-      if (fetchedPost.linkFlairID) {
-        const flairResponse = await axios.get(`http://localhost:8000/linkflairs`);
-        const matchedFlair = flairResponse.data.find(flair => flair._id === fetchedPost.linkFlairID);
-        if (matchedFlair) setLinkFlair(matchedFlair.content);
-      }
+        // Fetch link flair if it exists
+        if (fetchedPost.linkFlairID) {
+            const flairResponse = await axios.get(`http://localhost:8000/linkflairs`);
+            const matchedFlair = flairResponse.data.find(flair => flair._id === fetchedPost.linkFlairID);
+            if (matchedFlair) setLinkFlair(matchedFlair.content);
+        }
+
+        // Fetch the post creator's display name
+        //const userResponse = await axios.get(`http://localhost:8000/users/${fetchedPost.postedBy}`);
+        //console.log(userResponse.data.displayName);
+        //setPostCreator(userResponse.data.displayName);
     } catch (err) {
-      console.error('Error fetching post', err);
+        console.error('Error fetching post or related data', err);
     }
 
     console.log("Fetching comments for post:", postID);
     try {
-      const commentsResponse = await axios.get(`http://localhost:8000/comments/${postID}`);
-      setComments(commentsResponse.data);
+        const commentsResponse = await axios.get(`http://localhost:8000/comments/${postID}`);
+        setComments(commentsResponse.data);
     } catch (err) {
-      console.error('Error fetching comments:', err);
+        console.error('Error fetching comments:', err);
     }
-  };
+};
+
 
 
 
@@ -100,11 +108,15 @@ const handleDownvote = async (postId) => {
         {commentIDs.map((commentID) => {
           const comment = comments.find((c) => c._id === commentID);
           if (!comment) return null;
-  
+
+          // Find the user's displayName from the `users` array
+          const user = users.find(u => u._id === comment.commentedBy);
+          const commentCreator = user ? user.displayName : 'Unknown User';
+          
           return (
             <li key={comment._id}>
               <div>
-                <strong>{comment.commentedBy}</strong> ({formatTimestamp(comment.commentedDate)}):<br />
+                <strong>{commentCreator}</strong> ({formatTimestamp(comment.commentedDate)}):<br />
                 {comment.content}
               </div>
               <button onClick={() => showReplyPage(postID, comment._id)}>Reply</button>
@@ -136,22 +148,12 @@ const handleDownvote = async (postId) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   if (!post) {
     return <div>Loading post...</div>;
   }
-
+  const creator = post.postedBy._id
+            ? users.find(u => u._id === post.postedBy._id)?.displayName || '' 
+            : '';
   return (
     <div id="post-section">
       <div className="post-container">
@@ -163,7 +165,7 @@ const handleDownvote = async (postId) => {
             <span className="post-timestamp">{formatTimestamp(post.postedDate)}</span>
           </div>
 
-          <p className="post-creator">Posted by {post.postedBy?.displayName||'unknown'}</p>
+          <p className="post-creator">Posted by {creator}</p>
 
           <h1 className="post-title">{post.title}</h1>
 
