@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentUser }) {
+function CreatePost({
+  communities,
+  linkFlairs,
+  fetchData,
+  showHomePage,
+  currentUser,
+  currentPost,
+  setCurrentPost,
+  showView,
+}) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [community, setCommunity] = useState('');
@@ -9,6 +18,16 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentU
   const [newFlair, setNewFlair] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Pre-fill the form if editing an existing post
+  useEffect(() => {
+    if (currentPost) {
+      setTitle(currentPost.title);
+      setContent(currentPost.content);
+      setCommunity(currentPost.communityID);
+      setFlair(currentPost.linkFlairID || '');
+    }
+  }, [currentPost]);
 
   // Sort communities with joined ones first
   const sortedCommunities = currentUser
@@ -18,8 +37,7 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentU
       ]
     : communities;
 
-  // Function to handle creating a new post
-  const handleCreatePost = async (e) => {
+  const handleCreateOrUpdatePost = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -46,20 +64,31 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentU
         flairID = flairResponse.data._id;
       }
 
-      const newPost = {
-        title,
-        content,
-        communityID: community,
-        linkFlairID: flairID, // Optional flair ID
-        postedBy: currentUser._id, // Use the logged-in user's display name
-        postedDate: new Date(),
-        views: 0,
-        commentIDs: [],
-      };
-      console.log('Payload sent to server:', newPost);
-
-      // Send POST request to create a new post
-      await axios.post('http://localhost:8000/posts', newPost);
+      if (currentPost) {
+        // Update existing post
+        await axios.patch(`http://localhost:8000/posts/update/${currentPost._id}`, {
+          title,
+          content,
+          communityID: community,
+          linkFlairID: flairID,
+        });
+        alert('Post updated successfully!');
+        setCurrentPost(null);
+      } else {
+        // Create a new post
+        const newPost = {
+          title,
+          content,
+          communityID: community,
+          linkFlairID: flairID, // Optional flair ID
+          postedBy: currentUser._id,
+          postedDate: new Date(),
+          views: 0,
+          commentIDs: [],
+        };
+        await axios.post('http://localhost:8000/posts', newPost);
+        alert('Post created successfully!');
+      }
 
       // Refresh posts and communities
       await fetchData();
@@ -74,17 +103,27 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentU
       // Navigate back to the homepage
       showHomePage();
     } catch (err) {
-      console.error('Error creating post:', err);
-      setError('Failed to create post. Please try again.');
+      console.error('Error saving post:', err);
+      setError(
+        err.response?.data?.error || 'An unexpected error occurred while saving the post.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    if (currentPost) {
+      setCurrentPost(null);
+      showView('profile'); // Go back to user profile if editing an existing community
+    } else {
+      showView('home'); // Go back to home if creating a new community
+    }
+  };
   return (
     <div id="create-post-page" className="front-page">
-      <h2>Create a New Post</h2>
-      <form onSubmit={handleCreatePost}>
+      <h2>{currentPost ? 'Edit Post' : 'Create a New Post'}</h2>
+      <form onSubmit={handleCreateOrUpdatePost}>
         {error && <p className="error">{error}</p>}
 
         <label htmlFor="communitySelect">Select Community: *</label>
@@ -145,9 +184,9 @@ function CreatePost({ communities, linkFlairs, fetchData, showHomePage, currentU
         />
 
         <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Creating...' : 'Submit Post'}
+          {isLoading ? 'Saving...' : currentPost ? 'Save Changes' : 'Submit Post'}
         </button>
-        <button type="button" onClick={showHomePage}>
+        <button type="button" onClick={handleCancel}>
           Cancel
         </button>
       </form>

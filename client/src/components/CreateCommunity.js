@@ -90,6 +90,7 @@ function CreateCommunity({ updateCommunityList, showCommunity, currentUser, curr
   // Handle cancel action
   const handleCancel = () => {
     if (currentCommunity) {
+      setCurrentCommunity(null);
       showView('profile'); // Go back to user profile if editing an existing community
     } else {
       showView('home'); // Go back to home if creating a new community

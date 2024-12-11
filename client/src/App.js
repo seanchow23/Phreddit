@@ -30,14 +30,17 @@ function App() {
   const [communities, setCommunities] = useState([]);
   const [posts, setPosts] = useState([]);
   const [comments, setComments] = useState([]);
+  const [commentToEdit, setCommentToEdit] = useState(null);
   const [linkFlairs, setLinkFlairs] = useState([]);
   const [users, setUsers] = useState([]);
   const [currentCommunity, setCurrentCommunity] = useState(null);
   const [communityToEdit, setCommunityToEdit] = useState(null);
   const [selectedPostID, setSelectedPostID] = useState(null);
+  const [postToEdit, setPostToEdit] = useState(null);
   const [searchedPosts, setSearchedPosts] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [parentCommentID, setParentCommentID] = useState(null);
+  const [adminOriginalUser, setAdminOriginalUser] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -235,6 +238,9 @@ function App() {
             fetchData={fetchData}
             showHomePage={() => setView('home')}
             currentUser={currentUser}
+            currentPost={postToEdit}
+            setCurrentPost={setPostToEdit}
+            showView={setView}
           />
         )}
         {view === 'createCommunity' && (
@@ -278,6 +284,8 @@ function App() {
             fetchData={fetchData}
             showPostSection={() => setView('postSection')}
             currentUser={currentUser}
+            currentComment={commentToEdit}
+            setCurrentComment={setCommentToEdit}
           />
         )}
         {view === 'profile' && (
@@ -291,6 +299,12 @@ function App() {
               showView={setView}
               setCurrentCommunity = {setCommunityToEdit}
               updateCommunityList={fetchData}
+              setCurrentPost = {setPostToEdit}
+              updatePostList= {fetchData}
+              setCurrentComment = {setCommentToEdit}
+              setCurrentUser = {setCurrentUser}
+              adminOriginalUser = {adminOriginalUser}
+              setAdminOriginalUser = {setAdminOriginalUser}
             />
           )}
       </div>

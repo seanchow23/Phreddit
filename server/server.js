@@ -157,6 +157,7 @@ app.get('/users', async (req, res) => {
 
 
   // Deleting a comment and its replies
+// Deleting a comment and its replies
 app.delete('/comments/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -167,13 +168,19 @@ app.delete('/comments/:id', async (req, res) => {
       return res.status(404).json({ error: 'Comment not found' });
     }
 
-    // Call deleteComment for all replies
-    for (const replyID of comment.commentIDs) {
-      await axios.delete(`http://localhost:8000/comments/${replyID}`);
-    }
+    // Recursive function to delete a comment and its replies
+    const deleteCommentAndReplies = async (commentID) => {
+      const commentToDelete = await CommentModel.findById(commentID);
+      if (commentToDelete) {
+        for (const replyID of commentToDelete.commentIDs) {
+          await deleteCommentAndReplies(replyID); // Recursively delete replies
+        }
+        await CommentModel.findByIdAndDelete(commentID); // Delete the current comment
+      }
+    };
 
-    // Delete the comment itself
-    await CommentModel.findByIdAndDelete(id);
+    // Start deletion with the main comment
+    await deleteCommentAndReplies(id);
 
     res.status(200).json({ message: 'Comment and all associated replies deleted successfully.' });
   } catch (err) {
@@ -182,13 +189,13 @@ app.delete('/comments/:id', async (req, res) => {
   }
 });
 
-// Deleting a post
-// Deleting a post
+
+// delete a post
 app.delete('/posts/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Find the post to get its communityID
+    // Find the post to get its communityID and commentIDs
     const post = await PostModel.findById(id);
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
@@ -199,11 +206,23 @@ app.delete('/posts/:id', async (req, res) => {
       $pull: { postIDs: id }
     });
 
+    // Recursively delete all comments associated with this post
+    const deleteCommentsRecursively = async (commentIDs) => {
+      for (const commentID of commentIDs) {
+        const comment = await CommentModel.findById(commentID);
+        if (comment) {
+          // Delete replies recursively
+          await deleteCommentsRecursively(comment.commentIDs);
+          // Delete the comment itself
+          await CommentModel.findByIdAndDelete(commentID);
+        }
+      }
+    };
+
+    await deleteCommentsRecursively(post.commentIDs);
+
     // Delete the post itself
     await PostModel.findByIdAndDelete(id);
-
-    // Optionally, delete associated comments of the post
-    await CommentModel.deleteMany({ postID: id });
 
     res.status(200).json({ message: 'Post and associated comments deleted successfully.' });
   } catch (err) {
@@ -213,6 +232,46 @@ app.delete('/posts/:id', async (req, res) => {
 });
 
 
+// Deleting a user and all their data
+app.delete('/users/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await UserModel.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete all communities created by the user
+    const userCommunities = await CommunityModel.find({ createdBy: id });
+    for (const community of userCommunities) {
+      await CommunityModel.findByIdAndDelete(community._id);
+      await PostModel.deleteMany({ communityID: community._id });
+      await CommentModel.deleteMany({ postID: { $in: community.postIDs } });
+    }
+
+    // Delete all posts created by the user
+    const userPosts = await PostModel.find({ postedBy: id });
+    for (const post of userPosts) {
+      await PostModel.findByIdAndDelete(post._id);
+      await CommentModel.deleteMany({ postID: post._id });
+    }
+
+    // Delete all comments created by the user
+    await CommentModel.deleteMany({ commentedBy: id });
+
+    // Delete the user
+    await UserModel.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'User and all associated data deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+
+// delete a community
 app.delete('/communities/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -223,11 +282,28 @@ app.delete('/communities/:id', async (req, res) => {
       return res.status(404).json({ error: 'Community not found' });
     }
 
-    // Delete all posts and their comments associated with the community
+    // Delete all posts and their associated comments
     for (const postID of community.postIDs) {
-      // Use the deletePost logic here
-      await PostModel.findByIdAndDelete(postID);
-      await CommentModel.deleteMany({ postID });
+      const post = await PostModel.findById(postID);
+      if (post) {
+        // Recursively delete all comments of the post
+        const deleteCommentsRecursively = async (commentIDs) => {
+          for (const commentID of commentIDs) {
+            const comment = await CommentModel.findById(commentID);
+            if (comment) {
+              // Delete replies recursively
+              await deleteCommentsRecursively(comment.commentIDs);
+              // Delete the comment itself
+              await CommentModel.findByIdAndDelete(commentID);
+            }
+          }
+        };
+
+        await deleteCommentsRecursively(post.commentIDs);
+
+        // Delete the post itself
+        await PostModel.findByIdAndDelete(postID);
+      }
     }
 
     // Finally, delete the community
@@ -239,6 +315,7 @@ app.delete('/communities/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete community' });
   }
 });
+
 
 
 //updating a community
@@ -690,6 +767,39 @@ app.patch('/posts/:postID', async (req, res) => {
   }
 });
 
+// Update an existing post
+app.patch('/posts/update/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, content, communityID, linkFlairID } = req.body;
+
+  if (!title || !content || !communityID) {
+    return res.status(400).json({ error: 'Title, content, and community ID are required.' });
+  }
+
+  try {
+    const updatedPost = await PostModel.findByIdAndUpdate(
+      id,
+      {
+        title,
+        content,
+        communityID,
+        linkFlairID: linkFlairID || null, // Optional flair
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.status(200).json(updatedPost);
+  } catch (err) {
+    console.error('Error updating post:', err);
+    res.status(500).json({ error: 'Failed to update post' });
+  }
+});
+
+
 // Increment view count for a specific post
 app.patch('/posts/:postID/views', async (req, res) => {
   const { postID } = req.params;
@@ -714,6 +824,26 @@ app.patch('/posts/:postID/views', async (req, res) => {
 
 
 
+
+// Update an existing comment
+app.patch('/comments/update/:id', async (req, res) => {
+  const { content } = req.body;
+
+  if (!content || content.length < 5) {
+    return res.status(400).json({ error: 'Content must be at least 5 characters long.' });
+  }
+
+  try {
+    const updatedComment = await CommentModel.findByIdAndUpdate(req.params.id, { content }, { new: true });
+    if (!updatedComment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+    res.status(200).json(updatedComment);
+  } catch (err) {
+    console.error('Error updating comment:', err);
+    res.status(500).json({ error: 'Failed to update comment' });
+  }
+});
 
 // add comment to comment
 // Upvote a comment
