@@ -42,6 +42,10 @@ function App() {
   const [parentCommentID, setParentCommentID] = useState(null);
   const [adminOriginalUser, setAdminOriginalUser] = useState(null);
 
+  
+
+  axios.defaults.withCredentials = true;
+
   const fetchData = async () => {
     try {
       const [communitiesRes, postsRes, commentsRes, linkFlairsRes, usersRes] = await Promise.all([
@@ -67,11 +71,20 @@ function App() {
   }, []);
 
 
-  // Logout function
-  const logout = () => {
-    setCurrentUser(null); // Clear the user state
-    setView('welcome'); // Redirect to the welcome page
+  const logout = async () => {
+    try {
+      await axios.post('http://localhost:8000/auth/logout'); // Backend clears the cookie
+      setCurrentUser(null); // Clear the user state
+      setIsAuthenticated(false);
+      setView('welcome'); // Redirect to the welcome page
+      alert('Logged out successfully.');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      alert('Logout failed.');
+    }
   };
+  
+
 
   //register a given user, used in registerPage
   const registerUser = async (userData) => {
@@ -92,16 +105,30 @@ function App() {
     }
   };
 
-  //log in a given user, used in loginPage
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/auth/session');
+        setCurrentUser(response.data.user);
+        setIsAuthenticated(true);
+        setView('home');
+      } catch {
+        setIsAuthenticated(false);
+        setView('welcome');
+      }
+    };
+  
+    checkSession(); // Called automatically when App mounts
+  }, []);
+    
   const loginUser = async (credentials) => {
     try {
-      const existingUser = users.find(user => user.email === credentials.email);
-      if (!existingUser) {
-        alert('No account found with this email.');
-        return;
-      }
-
-      const response = await axios.post('http://localhost:8000/auth/login', credentials);
+      // Send login request
+      await axios.post('http://localhost:8000/auth/login', credentials);
+  
+      // Fetch current user details using cookies
+      const response = await axios.get('http://localhost:8000/auth/session');
       setCurrentUser(response.data.user);
       setIsAuthenticated(true);
       alert('Login successful!');
@@ -112,6 +139,7 @@ function App() {
       alert(error.response?.data?.message || 'Login failed.');
     }
   };
+  
 
 
   const showReplyPage = (postID, commentID = null) => {
@@ -218,7 +246,15 @@ function App() {
 
       {/* Main Content Views */}
       <div id="front-page">
-        {view === 'home' && <Home posts={posts} handlePostClick={handlePostClick}   currentUser={currentUser}  users = {users}// Pass currentUser as a prop
+        {view === 'home' && <Home posts={posts}
+          handlePostClick={handlePostClick}
+          currentUser={currentUser}
+          users = {users}// Pass currentUser as a prop
+          communities = {communities}
+          comments = {comments}
+          setPosts = {setPosts}
+          fetchData = {fetchData}
+             
         />}
         {view === 'search' && (
           <SearchView

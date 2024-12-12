@@ -23,49 +23,26 @@ function Home({ showView, handlePostClick, currentUser}) {
         axios.get('http://localhost:8000/communities'),
         axios.get('http://localhost:8000/comments'),
         axios.get('http://localhost:8000/linkflairs'),
-        axios.get('http://localhost:8000/users'),
+        axios.get(`http://localhost:8000/users`),
       ]);
-  
+
       setPosts(postsRes.data);
+      console.log('fetched posts', posts);
       setCommunities(communitiesRes.data);
       setComments(commentsRes.data);
       setLinkFlairs(linkFlairsRes.data);
       setUsers(usersRes.data);
-  
-      // Determine joined and unjoined communities
-      const joinedCommunities = currentUser
-        ? communitiesRes.data.filter((community) =>
-            community.members.includes(currentUser._id)
-          )
-        : [];
-  
-      const unjoinedCommunities = currentUser
-        ? communitiesRes.data.filter(
-            (community) => !community.members.includes(currentUser._id)
-          )
-        : communitiesRes.data; // All communities for guest users
-  
-      // Get posts from joined communities
-      const joinedCommunityPosts = joinedCommunities.flatMap((community) =>
-        community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
-      );
-  
-      // Get posts from unjoined communities
-      const unjoinedCommunityPosts = unjoinedCommunities.flatMap((community) =>
-        community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
-      );
-  
-      // Combine posts: joined communities first (if any), then unjoined
-      const sortedByUserCommunities = currentUser
-        ? [...joinedCommunityPosts, ...unjoinedCommunityPosts]
-        : postsRes.data; // Show all posts for guests
-  
-      setSortedPosts(sortedByUserCommunities);
+
+
+      const sortedByNewest = postsRes.data.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
+    setSortedPosts(sortedByNewest);
+
+      
+
     } catch (err) {
       console.error('Error fetching data:', err);
     }
   };
-  
   
 
   // Format the timestamp for relative time display
