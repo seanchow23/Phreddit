@@ -2,51 +2,69 @@ import React, { useState, useEffect } from 'react';
 import '../stylesheets/SearchView.css';
 import axios from 'axios';
 
-function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communities, formatTimestamp, handlePostClick, currentUser, users }) {
+function SearchView({
+  matchingPosts,
+  localQuery,
+  linkFlairs,
+  communities,
+  formatTimestamp,
+  handlePostClick,
+  currentUser,
+  users,
+}) {
   const [sortedPosts, setSortedPosts] = useState([]);
 
-  // Initialize sortedPosts in "newest" order by default when matchingPosts changes
   useEffect(() => {
-    const sortedByNewest = [...matchingPosts].sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
-    setSortedPosts(sortedByNewest);
-  }, [matchingPosts]);
+    categorizeAndSortPosts();
+  }, [matchingPosts, currentUser]);
 
-  // Sort posts by newest first
-  const sortPostsByNewest = () => {
-    const sorted = [...sortedPosts].sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
-    setSortedPosts(sorted);
-  };
+  // Categorize and prioritize posts
+  const categorizeAndSortPosts = () => {
+    if (!matchingPosts || matchingPosts.length === 0) {
+      setSortedPosts([]);
+      return;
+    }
 
-  // Sort posts by oldest first
-  const sortPostsByOldest = () => {
-    const sorted = [...sortedPosts].sort((a, b) => new Date(a.postedDate) - new Date(b.postedDate));
-    setSortedPosts(sorted);
-  };
+    // Find community IDs the user is part of
+    const joinedCommunityIds = currentUser
+      ? communities
+          .filter((community) => community.members.includes(currentUser._id))
+          .map((community) => community._id)
+      : [];
 
-  // Sort posts by most active (most recent comment date)
-  const sortPostsByMostActive = () => {
-    const sorted = [...sortedPosts].sort((a, b) => {
-      const mostRecentCommentDateA = getMostRecentCommentDate(a);
-      const mostRecentCommentDateB = getMostRecentCommentDate(b);
-      return new Date(mostRecentCommentDateB) - new Date(mostRecentCommentDateA);
-    });
-    setSortedPosts(sorted);
-  };
-
-  // Helper function to get the most recent comment date for a post
-  const getMostRecentCommentDate = (post) => {
-    if (!post.commentIDs.length) return new Date(0);
-    const postComments = post.commentIDs.map((commentID) =>
-      communities.find((comment) => comment._id === commentID)
+    // Separate posts into joined and unjoined
+    const joinedCommunityPosts = matchingPosts.filter((post) =>
+      communities.some(
+        (community) =>
+          community.postIDs.includes(post._id) && joinedCommunityIds.includes(community._id)
+      )
     );
-    const mostRecentComment = postComments.sort((a, b) => new Date(b.commentedDate) - new Date(a.commentedDate))[0];
-    return mostRecentComment ? mostRecentComment.commentedDate : new Date(0);
+
+    console.log('joined comms',joinedCommunityPosts);
+
+    const unjoinedCommunityPosts = matchingPosts.filter((post) =>
+      !communities.some(
+        (community) =>
+          community.postIDs.includes(post._id) && joinedCommunityIds.includes(community._id)
+      )
+    );
+
+    // Combine posts: joined first, then unjoined
+    const prioritizedPosts = [
+      ...joinedCommunityPosts,
+      ...unjoinedCommunityPosts,
+    ];
+
+    setSortedPosts(prioritizedPosts);
   };
 
   // Handle upvote
   const handleUpvote = async (postId) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`,  { userID: currentUser._id } );
+      const response = await axios.patch(
+        `http://localhost:8000/posts/${postId}/upvote`,
+        { userID: currentUser._id }
+      );
       const updatedPost = response.data;
 
       // Update sortedPosts with the updated post
@@ -62,7 +80,10 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
   // Handle downvote
   const handleDownvote = async (postId) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`, { userID: currentUser._id } );
+      const response = await axios.patch(
+        `http://localhost:8000/posts/${postId}/downvote`,
+        { userID: currentUser._id }
+      );
       const updatedPost = response.data;
 
       // Update sortedPosts with the updated post
@@ -77,7 +98,6 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
 
   return (
     <div id="search-view">
-      {/* Conditionally render based on whether matching posts are found */}
       {matchingPosts && matchingPosts.length > 0 ? (
         <h2>Search Results For: "{localQuery}"</h2>
       ) : (
@@ -86,34 +106,20 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
 
       <h3>Post count: {sortedPosts.length}</h3>
 
-      {/* Sort buttons */}
-      <div id="button-container" className="align-right">
-        <button className="sort-button" onClick={sortPostsByNewest}>Newest</button>
-        <button className="sort-button" onClick={sortPostsByOldest}>Oldest</button>
-        <button className="sort-button" onClick={sortPostsByMostActive}>Active</button>
-      </div>
-
       {sortedPosts.length > 0 && (
         <div className="post-list">
-
-        
-          
           {sortedPosts.map((post) => {
-            
-            const community = communities.find((c) => c.postIDs.includes(post._id)) || { name: 'Unknown' };
+            const community = communities.find((c) => c.postIDs.includes(post._id)) || {
+              name: 'Unknown',
+            };
             const truncatedContent = post.content.substring(0, 80) + '...';
-            
             const creator = post.postedBy
-            ? users.find((u) => u._id === post.postedBy)?.displayName || 'Unknown User'
-            : 'Unknown User';
-         
+              ? users.find((u) => u._id === post.postedBy)?.displayName || 'Unknown User'
+              : 'Unknown User';
             const flair = post.linkFlairID
               ? linkFlairs.find((l) => l._id === post.linkFlairID)?.content || ''
               : '';
 
-            // Count total comments, including replies
-            const totalComments = post.commentIDs.length;
-           
             return (
               <div key={post._id} id="post-item" onClick={() => handlePostClick(post._id)}>
                 <div className="post-meta">
@@ -130,38 +136,38 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
                 <div className="post-stats">
                   <span className="post-views">Views: {post.views || 0}</span>
                   <span className="separator"> | </span>
-                  <span className="post-comments">Comments: {totalComments}</span>
+                  <span className="post-comments">Comments: {post.commentIDs.length}</span>
+                  <span className="separator"> | </span>
+                  <span className="vote-count">{post.voteCount || 0} votes</span>
                 </div>
 
-                {/* Upvote/Downvote Section */}
                 <div className="vote-section">
                   <button
-                    className={`vote-button upvote-button ' }`}
+                    className={`vote-button upvote-button ${!currentUser ? 'disabled' : ''}`}
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent post click event
+                      e.stopPropagation();
                       if (currentUser) {
                         handleUpvote(post._id);
                       } else {
                         alert('You must be logged in to upvote.');
                       }
                     }}
-                    disabled={!currentUser} // Disable button for guests
+                    disabled={!currentUser}
                   >
                     ▲
                   </button>
-                
-                  <span className="vote-count">  {`${post.voteCount || 0} votes`}</span>
+
                   <button
                     className={`vote-button downvote-button ${!currentUser ? 'disabled' : ''}`}
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent post click event
+                      e.stopPropagation();
                       if (currentUser) {
                         handleDownvote(post._id);
                       } else {
                         alert('You must be logged in to downvote.');
                       }
                     }}
-                    disabled={!currentUser} // Disable button for guests
+                    disabled={!currentUser}
                   >
                     ▼
                   </button>
