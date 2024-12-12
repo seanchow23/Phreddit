@@ -18,7 +18,7 @@ In the sections below, list and describe each contribution briefly.
 ## Team Member 1 Contribution
 ## Vote functionality, Cookie session,search results page view , comment view
 ## Team Member 2 Contribution
-
+##  userProfile, schemas, init.js, server, app.js, UML
 Making the UML for components , I used PlantUML website
 This is the code that was provided to plantUML
 @startuml
