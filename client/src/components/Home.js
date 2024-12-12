@@ -23,44 +23,49 @@ function Home({ showView, handlePostClick, currentUser}) {
         axios.get('http://localhost:8000/communities'),
         axios.get('http://localhost:8000/comments'),
         axios.get('http://localhost:8000/linkflairs'),
-        axios.get(`http://localhost:8000/users`),
+        axios.get('http://localhost:8000/users'),
       ]);
-
+  
       setPosts(postsRes.data);
       setCommunities(communitiesRes.data);
       setComments(commentsRes.data);
       setLinkFlairs(linkFlairsRes.data);
       setUsers(usersRes.data);
-
-
-      
-    // Sort communities into joined and unjoined
-    const joinedCommunities = communitiesRes.data.filter((community) =>
-      community.members.includes(currentUser._id)
-    );
-
-    const unjoinedCommunities = communitiesRes.data.filter(
-      (community) => !community.members.includes(currentUser._id)
-    );
-
-    // Get posts from joined communities
-    const joinedCommunityPosts = joinedCommunities.flatMap((community) =>
-      community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
-    );
-
-    // Get posts from unjoined communities
-    const unjoinedCommunityPosts = unjoinedCommunities.flatMap((community) =>
-      community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
-    );
-
-    // Combine posts: joined communities first, then unjoined
-    const sortedByUserCommunities = [...joinedCommunityPosts, ...unjoinedCommunityPosts];
-
-    setSortedPosts(sortedByUserCommunities);
-  } catch (err) {
-    console.error('Error fetching data:', err);
-  }
-};
+  
+      // Determine joined and unjoined communities
+      const joinedCommunities = currentUser
+        ? communitiesRes.data.filter((community) =>
+            community.members.includes(currentUser._id)
+          )
+        : [];
+  
+      const unjoinedCommunities = currentUser
+        ? communitiesRes.data.filter(
+            (community) => !community.members.includes(currentUser._id)
+          )
+        : communitiesRes.data; // All communities for guest users
+  
+      // Get posts from joined communities
+      const joinedCommunityPosts = joinedCommunities.flatMap((community) =>
+        community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
+      );
+  
+      // Get posts from unjoined communities
+      const unjoinedCommunityPosts = unjoinedCommunities.flatMap((community) =>
+        community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
+      );
+  
+      // Combine posts: joined communities first (if any), then unjoined
+      const sortedByUserCommunities = currentUser
+        ? [...joinedCommunityPosts, ...unjoinedCommunityPosts]
+        : postsRes.data; // Show all posts for guests
+  
+      setSortedPosts(sortedByUserCommunities);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    }
+  };
+  
   
 
   // Format the timestamp for relative time display
