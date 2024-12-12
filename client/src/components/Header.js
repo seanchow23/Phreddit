@@ -77,9 +77,15 @@ const Header = ({ showView, currentView, setSearchedPosts, setSearchQuery, curre
         {/* User Profile Section */}
         <li className="banner-item-user">
           <div className="user-profile">
-            {currentUser ? (
+          {currentUser ? (
               <>
-                <span>Welcome, {currentUser.displayName}</span>
+                <span
+                  className="user-link"
+                  onClick={() => showView('profile')}
+                  style={{ cursor: 'pointer', textDecoration: 'underline', color: 'blue' }}
+                >
+                  Welcome, {currentUser.displayName}
+                </span>
                 <button className="logout-button" onClick={logout}>Logout</button>
               </>
             ) : (

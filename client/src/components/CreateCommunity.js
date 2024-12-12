@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function CreateCommunity({ updateCommunityList, showCommunity, currentUser }) {
+function CreateCommunity({ updateCommunityList, showCommunity, currentUser, currentCommunity, setCurrentCommunity, showView }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Pre-fill the form if editing an existing community
+  useEffect(() => {
+    if (currentCommunity) {
+      setName(currentCommunity.name);
+      setDescription(currentCommunity.description);
+    }
+  }, [currentCommunity]);
 
   // Function to validate inputs
   const validateInputs = () => {
@@ -15,13 +23,13 @@ function CreateCommunity({ updateCommunityList, showCommunity, currentUser }) {
       errors.name = "Name is required and should be less than 100 characters.";
     }
     if (!description || description.length > 500 || description.length < 10) {
-      errors.description = "Description is required and should be less than 500 characters and greater then 10.";
+      errors.description = "Description is required and should be less than 500 characters and greater than 10.";
     }
     return errors;
   };
 
-  // Function to handle creating a new community
-  const handleCreateCommunity = async (e) => {
+  // Function to handle creating or updating a community
+  const handleCreateOrUpdateCommunity = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrors({});
@@ -33,46 +41,69 @@ function CreateCommunity({ updateCommunityList, showCommunity, currentUser }) {
       return;
     }
 
-    const newCommunity = {
-      name,
-      description,
-      postIDs: [],
-      members: [currentUser._id], // Use currentUser's ID as the initial member
-      createdBy: currentUser._id,
-      memberCount: 1,
-      startDate: new Date(),
-    };
-
     try {
-      // Send POST request to server to create a new community
-      const response = await axios.post('http://localhost:8000/communities', newCommunity);
-      console.log('Community created:', response.data);
+      if (currentCommunity) {
+        // Update existing community
+        await axios.patch(`http://localhost:8000/communities/${currentCommunity._id}`, {
+          name,
+          description,
+        });
+        setSuccessMessage('Community updated successfully!');
+        setCurrentCommunity(null);
+      } else {
+        // Create new community
+        const newCommunity = {
+          name,
+          description,
+          postIDs: [],
+          members: [currentUser._id], // Use currentUser's ID as the initial member
+          createdBy: currentUser._id,
+          memberCount: 1,
+          startDate: new Date(),
+        };
+
+        const response = await axios.post('http://localhost:8000/communities', newCommunity);
+        setSuccessMessage('Community created successfully!');
+        showCommunity(response.data._id); // Navigate to the new community view
+      }
 
       // Refresh the list of communities in App.js
       await updateCommunityList();
 
-      // Show success message and reset form
-      setSuccessMessage('Community created successfully!');
+      // Reset form fields
       setName('');
       setDescription('');
-
-      // Navigate to the new community view
-      showCommunity(response.data._id);
     } catch (error) {
-      console.error('Error creating community:', error);
-      setErrors({ server: 'Failed to create community. Please try again.' });
+      console.error('Error saving community:', error);
+
+      // Check if the error response exists and contains a message
+      if (error.response && error.response.data && error.response.data.error) {
+        setErrors({ server: error.response.data.error }); // Use the error message from the server
+      } else {
+        setErrors({ server: 'Failed to save community. Please try again.' }); // Default error message
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle cancel action
+  const handleCancel = () => {
+    if (currentCommunity) {
+      setCurrentCommunity(null);
+      showView('profile'); // Go back to user profile if editing an existing community
+    } else {
+      showView('home'); // Go back to home if creating a new community
+    }
+  };
+
   return (
     <div id="create-community-page" className="front-page">
-      <h2>Create a New Community</h2>
+      <h2>{currentCommunity ? 'Edit Community' : 'Create a New Community'}</h2>
 
       {successMessage && <p className="success">{successMessage}</p>}
 
-      <form onSubmit={handleCreateCommunity}>
+      <form onSubmit={handleCreateOrUpdateCommunity}>
         <label>Community Name <span className="required">*</span></label>
         <input
           type="text"
@@ -95,7 +126,10 @@ function CreateCommunity({ updateCommunityList, showCommunity, currentUser }) {
         {errors.server && <p className="error">{errors.server}</p>}
 
         <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Creating...' : 'Create Community'}
+          {isLoading ? 'Saving...' : currentCommunity ? 'Save Changes' : 'Create Community'}
+        </button>
+        <button type="button" onClick={handleCancel}>
+          Cancel
         </button>
       </form>
     </div>
