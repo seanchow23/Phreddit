@@ -17,8 +17,7 @@ const PostSchema = new Schema({
             return this.upvotes - this.downvotes;
         },
     },
-    attachments: [{ type: String }], // Optional
-    tags: [{ type: String }],        // Optional
+    
 });
 
 // Virtual for post URL
