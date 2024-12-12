@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NewReplyPage from './NewReplyPage';
+import '../stylesheets/postview.css';
 
 const PostSection = ({ postID, showPostSection, communities, showReplyPage   ,currentUser, users // Pass currentUser here
 }) => {
@@ -19,24 +20,52 @@ const PostSection = ({ postID, showPostSection, communities, showReplyPage   ,cu
     fetchPostData();
   }, [postID]);
 
+  
+
   const handleUpvote = async (postId) => {
   try {
-    const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`);
+    const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`,     { userID: currentUser._id,} // Pass the current user's ID
+    );
+    
     setPost(response.data); // Update the post state with the updated vote count
   } catch (error) {
     console.error('Error upvoting post:', error.response?.data || error.message);
-    alert('Failed to upvote the post.');
+
+
+    if (error.response?.status === 403) {
+      // Directly alert the user
+      alert(error.response.data.error || 'Your reputation is too low to upvote.');
+    }
   }
 };
 
 const handleDownvote = async (postId) => {
   try {
-    const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`);
-    setPost(response.data); // Update the post state with the updated vote count
+    const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`,
+      { userID: currentUser._id } // Include the voter ID
+
+    );    setPost(response.data); // Update the post state with the updated vote count
   } catch (error) {
     console.error('Error downvoting post:', error.response?.data || error.message);
-    alert('Failed to downvote the post.');
-  }
+
+    if (error.response?.status === 403) {
+      // Directly alert the user
+      alert(error.response.data.error || 'Your reputation is too low to upvote.');
+    }  }
+};
+
+const countCommentsAndReplies = (commentIDs) => {
+  let totalComments = 0;
+  commentIDs.forEach(commentID => {
+    const comment = comments.find(c => c._id === commentID);
+    if (comment) {
+      totalComments++;
+      if (comment.commentIDs && comment.commentIDs.length > 0) {
+        totalComments += countCommentsAndReplies(comment.commentIDs);
+      }
+    }
+  });
+  return totalComments;
 };
 
   const fetchPostData = async () => {
@@ -70,7 +99,12 @@ const handleDownvote = async (postId) => {
     try {
         const commentsResponse = await axios.get(`http://localhost:8000/comments/${postID}`);
         setComments(commentsResponse.data);
-    } catch (err) {
+
+
+        const totalComments = countCommentsAndReplies(commentsResponse.data.map(c => c._id));
+    setPost(prev => ({ ...prev, totalComments })); // Add totalComments to the post state
+  }
+     catch (err) {
         console.error('Error fetching comments:', err);
     }
 };
@@ -78,27 +112,46 @@ const handleDownvote = async (postId) => {
 
 
 
+
+
   const handleCommentUpvote = async (commentID) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/comments/${commentID}/upvote`);
+      const response = await axios.patch(`http://localhost:8000/comments/${commentID}/upvote`, { userID: currentUser._id } , console.log('Sending userID:', currentUser._id));
+
       setComments((prevComments) =>
         prevComments.map((comment) => (comment._id === commentID ? response.data : comment))
       );
     } catch (error) {
       console.error('Error upvoting comment:', error.response?.data || error.message);
+      if (error.response?.status === 403) {
+        alert(error.response.data.error || 'Your reputation is too low to upvote.');
+      }
     }
+    
   };
 
   const handleCommentDownvote = async (commentID) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/comments/${commentID}/downvote`);
+      const response = await axios.patch(`http://localhost:8000/comments/${commentID}/downvote`, { userID: currentUser._id } // Pass the current user's ID
+      );
       setComments((prevComments) =>
         prevComments.map((comment) => (comment._id === commentID ? response.data : comment))
       );
     } catch (error) {
+      if (error.response?.status === 403) {
+        alert(error.response.data.error || 'Your reputation is too low to downvote.');
+      }
       console.error('Error downvoting comment:', error.response?.data || error.message);
     }
   };
+
+  const handleNewComment = async (newComment) => {
+    setComments(prevComments => [...prevComments, newComment]);
+    const totalComments = countCommentsAndReplies([...comments.map(c => c._id), newComment._id]);
+    setPost(prev => ({ ...prev, totalComments }));
+  };
+
+  
 
   const renderComments = (commentIDs) => {
     if (!commentIDs || commentIDs.length === 0) return null;
@@ -108,6 +161,8 @@ const handleDownvote = async (postId) => {
         {commentIDs.map((commentID) => {
           const comment = comments.find((c) => c._id === commentID);
           if (!comment) return null;
+
+
 
           // Find the user's displayName from the `users` array
           const user = users.find(u => u._id === comment.commentedBy);
@@ -128,7 +183,7 @@ const handleDownvote = async (postId) => {
                 >
                   ▲
                 </button>
-                <span className="vote-count">{comment.voteCount || 0}</span>
+                <span className="vote-count">{`${comment.voteCount || 0} votes`}</span>
                 <button
                   className={`vote-button downvote-button ${!currentUser ? 'disabled' : ''}`}
                   onClick={() => handleCommentDownvote(comment._id)}
@@ -178,44 +233,54 @@ const handleDownvote = async (postId) => {
           <p className="post-content">{post.content}</p>
         </div>
 
+        <div className="post-actions">
+
         {/* Reply to Post Button */}
         <button onClick={() => showReplyPage(postID)}>Reply to Post</button>
 
+        <span className="post-views">Views: {post.views || 0}</span>
+        <span className="post-comments">Comments: {post.totalComments}</span>
+
+
+
         {/* Comments Section */}
-        {renderComments(post.commentIDs)}
 
         <div className="post-stats">
-  <button
-    className={`vote-button upvote-button ${!currentUser ? 'disabled' : ''}`}
-    onClick={() => {
-      if (currentUser) {
-        handleUpvote(post._id);
-      } else {
-        alert('You must be logged in to upvote.');
-      }
-    }}
-    disabled={!currentUser} // Disable button for guests
-  >
-    ▲
-  </button>
-  <span className="vote-count">{post.voteCount || 0}</span>
-  <button
-    className={`vote-button downvote-button ${!currentUser ? 'disabled' : ''}`}
-    onClick={() => {
-      if (currentUser) {
-        handleDownvote(post._id);
-      } else {
-        alert('You must be logged in to downvote.');
-      }
-    }}
-    disabled={!currentUser} // Disable button for guests
-  >
-    ▼
-  </button>
-</div>
-
-      </div>
+    <button
+      className={`vote-button upvote-button ${!currentUser ? 'disabled' : ''}`}
+      onClick={() => {
+        if (currentUser) {
+          handleUpvote(post._id);
+        } else {
+          alert('You must be logged in to upvote.');
+        }
+      }}
+      disabled={!currentUser} // Disable button for guests
+    >
+      ▲
+    </button>
+    <span className="vote-count">{`${post.voteCount || 0} votes`}</span>
+    <button
+      className={`vote-button downvote-button ${!currentUser ? 'disabled' : ''}`}
+      onClick={() => {
+        if (currentUser) {
+          handleDownvote(post._id);
+        } else {
+          alert('You must be logged in to downvote.');
+        }
+      }}
+      disabled={!currentUser} // Disable button for guests
+    >
+      ▼
+    </button>
     </div>
+
+
+  </div>
+</div>
+{renderComments(post.commentIDs)}
+
+</div>
   );
 };
 

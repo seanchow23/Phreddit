@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../stylesheets/SearchView.css';
 import axios from 'axios';
 
-function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communities, formatTimestamp, handlePostClick, currentUser }) {
+function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communities, formatTimestamp, handlePostClick, currentUser, users }) {
   const [sortedPosts, setSortedPosts] = useState([]);
 
   // Initialize sortedPosts in "newest" order by default when matchingPosts changes
@@ -46,7 +46,7 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
   // Handle upvote
   const handleUpvote = async (postId) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`);
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/upvote`,  { userID: currentUser._id } );
       const updatedPost = response.data;
 
       // Update sortedPosts with the updated post
@@ -62,7 +62,7 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
   // Handle downvote
   const handleDownvote = async (postId) => {
     try {
-      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`);
+      const response = await axios.patch(`http://localhost:8000/posts/${postId}/downvote`, { userID: currentUser._id } );
       const updatedPost = response.data;
 
       // Update sortedPosts with the updated post
@@ -95,22 +95,31 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
 
       {sortedPosts.length > 0 && (
         <div className="post-list">
+
+        
+          
           {sortedPosts.map((post) => {
+            
             const community = communities.find((c) => c.postIDs.includes(post._id)) || { name: 'Unknown' };
             const truncatedContent = post.content.substring(0, 80) + '...';
+            
+            const creator = post.postedBy
+            ? users.find((u) => u._id === post.postedBy)?.displayName || 'Unknown User'
+            : 'Unknown User';
+         
             const flair = post.linkFlairID
               ? linkFlairs.find((l) => l._id === post.linkFlairID)?.content || ''
               : '';
 
             // Count total comments, including replies
             const totalComments = post.commentIDs.length;
-
+           
             return (
               <div key={post._id} id="post-item" onClick={() => handlePostClick(post._id)}>
                 <div className="post-meta">
                   <span className="community-name">r/{community.name}</span>
                   <span className="separator"> | </span>
-                  <span className="post-creator">Posted by {post.postedBy}</span>
+                  <span className="post-creator">Posted by {creator}</span>
                   <span className="separator"> | </span>
                   <span className="post-timestamp">{formatTimestamp(post.postedDate)}</span>
                 </div>
@@ -140,7 +149,8 @@ function SearchView({ matchingPosts, showPost, localQuery, linkFlairs, communiti
                   >
                     ▲
                   </button>
-                  <span className="vote-count">{post.voteCount || 0}</span>
+                
+                  <span className="vote-count">  {`${post.voteCount || 0} votes`}</span>
                   <button
                     className={`vote-button downvote-button ${!currentUser ? 'disabled' : ''}`}
                     onClick={(e) => {

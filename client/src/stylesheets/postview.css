@@ -1,0 +1,12 @@
+/* Align reply button and vote buttons in the same row */
+.post-actions {
+    display: flex;
+    align-items: center; /* Vertically align items */
+    gap: 10px; /* Add space between reply and votes */
+  }
+  
+  /* Optional: Style the reply button for consistency */
+  .reply-button {
+    margin: 0;
+  }
+  

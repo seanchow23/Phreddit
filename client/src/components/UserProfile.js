@@ -234,7 +234,7 @@ const UserProfile = ({ currentUser,
   
   return (
     <div className="user-profile-page">
-      <h1>{adminOriginalUser ? `Viewing Profile: ${currentUser.displayName}` : 'Admin Profile'}</h1>
+      <h1>{adminOriginalUser ? `Viewing Profile: ${currentUser.displayName}` : 'User Profile'}</h1>
       <p>Email: {currentUser.email}</p>
       <p>Display Name: {currentUser.displayName}</p>
       <p>Reputation: {currentUser.reputation}</p>

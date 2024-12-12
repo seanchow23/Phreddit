@@ -556,13 +556,26 @@ app.patch('/posts/:postID/upvote', async (req, res) => {
   const { postID } = req.params;
 
   try {
+    const voter = await UserModel.findById(req.body.userID);
+    if (!voter || voter.reputation < 50) {
+      return res.status(403).json({ error: 'Insufficient reputation to vote' });
+    }
+
+    // Fetch the post to get the postedBy field
+    const post = await PostModel.findById(postID);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Increment the upvotes for the post
     const updatedPost = await PostModel.findByIdAndUpdate(
       postID,
       { $inc: { upvotes: 1, voteCount: 1 } },
       { new: true } // Return the updated document
     );
 
-    if (!updatedPost) return res.status(404).json({ error: 'Post not found' });
+    // Increment reputation for the post's author
+    await UserModel.findByIdAndUpdate(post.postedBy, { $inc: { reputation: 5 } });
 
     res.status(200).json(updatedPost);
   } catch (err) {
@@ -571,26 +584,38 @@ app.patch('/posts/:postID/upvote', async (req, res) => {
   }
 });
 
-// Downvote a post
 app.patch('/posts/:postID/downvote', async (req, res) => {
   const { postID } = req.params;
 
   try {
-    // Use findByIdAndUpdate to atomically update downvotes and voteCount
+    const voter = await UserModel.findById(req.body.userID);
+    if (!voter || voter.reputation < 50) {
+      return res.status(403).json({ error: 'Insufficient reputation to vote' });
+    }
+
+    // Fetch the post to get the postedBy field
+    const post = await PostModel.findById(postID);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Increment the downvotes for the post
     const updatedPost = await PostModel.findByIdAndUpdate(
       postID,
-      { $inc: { downvotes: 1, voteCount: -1 } }, // Increment downvotes and adjust voteCount
+      { $inc: { downvotes: 1, voteCount: -1 } },
       { new: true } // Return the updated document
     );
 
-    if (!updatedPost) return res.status(404).json({ error: 'Post not found' });
+    // Decrement reputation for the post's author
+    await UserModel.findByIdAndUpdate(post.postedBy, { $inc: { reputation: -10 } });
 
-    res.status(200).json(updatedPost); // Return the updated post
+    res.status(200).json(updatedPost);
   } catch (err) {
     console.error('Error downvoting post:', err);
     res.status(500).json({ error: 'Failed to downvote post' });
   }
 });
+
 
 
 
@@ -846,17 +871,32 @@ app.patch('/comments/update/:id', async (req, res) => {
 });
 
 // add comment to comment
-// Upvote a comment
 app.patch('/comments/:commentID/upvote', async (req, res) => {
   const { commentID } = req.params;
+  const { userID } = req.body; // The user performing the upvote
+
   try {
+    // Find the voter
+    const voter = await UserModel.findById(userID);
+    if (!voter || voter.reputation < 50) {
+      return res.status(403).json({ error: 'Insufficient reputation to vote' });
+    }
+
+    // Fetch the comment to get the original commenter
+    const comment = await CommentModel.findById(commentID);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Increment the upvotes for the comment
     const updatedComment = await CommentModel.findByIdAndUpdate(
       commentID,
       { $inc: { upvotes: 1, voteCount: 1 } },
       { new: true } // Return the updated comment
     );
 
-    if (!updatedComment) return res.status(404).json({ error: 'Comment not found' });
+    // Increment reputation for the comment's author
+    await UserModel.findByIdAndUpdate(comment.commentedBy, { $inc: { reputation: 5 } });
 
     res.status(200).json(updatedComment);
   } catch (err) {
@@ -865,17 +905,34 @@ app.patch('/comments/:commentID/upvote', async (req, res) => {
   }
 });
 
+
 // Downvote a comment
 app.patch('/comments/:commentID/downvote', async (req, res) => {
   const { commentID } = req.params;
+  const { userID } = req.body; // The user performing the downvote
+
   try {
+    // Find the voter
+    const voter = await UserModel.findById(userID);
+    if (!voter || voter.reputation < 50) {
+      return res.status(403).json({ error: 'Insufficient reputation to vote' });
+    }
+
+    // Fetch the comment to get the original commenter
+    const comment = await CommentModel.findById(commentID);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Increment the downvotes for the comment
     const updatedComment = await CommentModel.findByIdAndUpdate(
       commentID,
       { $inc: { downvotes: 1, voteCount: -1 } },
       { new: true } // Return the updated comment
     );
 
-    if (!updatedComment) return res.status(404).json({ error: 'Comment not found' });
+    // Decrement reputation for the comment's author
+    await UserModel.findByIdAndUpdate(comment.commentedBy, { $inc: { reputation: -10 } });
 
     res.status(200).json(updatedComment);
   } catch (err) {
@@ -883,6 +940,7 @@ app.patch('/comments/:commentID/downvote', async (req, res) => {
     res.status(500).json({ error: 'Failed to downvote comment' });
   }
 });
+
 
 // Add a reply to a specific comment
 app.patch('/comments/:commentID', async (req, res) => {

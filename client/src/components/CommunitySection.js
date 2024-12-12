@@ -173,6 +173,8 @@ const CommunitySection = ({ communityID, handlePostClick, currentUser, users, ha
                 <span className="post-views">Views: {post.views || 0}</span>
                 <span className="separator"> | </span>
                 <span className="post-comments">Comments: {totalComments}</span>
+                <span className="separator"> | </span>
+                <span className="post-votes">{post.voteCount || 0} votes</span> 
               </div>
             </div>
           );
