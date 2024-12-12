@@ -27,22 +27,40 @@ function Home({ showView, handlePostClick, currentUser}) {
       ]);
 
       setPosts(postsRes.data);
-      console.log('fetched posts', posts);
       setCommunities(communitiesRes.data);
       setComments(commentsRes.data);
       setLinkFlairs(linkFlairsRes.data);
       setUsers(usersRes.data);
 
 
-      const sortedByNewest = postsRes.data.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
-    setSortedPosts(sortedByNewest);
-
       
+    // Sort communities into joined and unjoined
+    const joinedCommunities = communitiesRes.data.filter((community) =>
+      community.members.includes(currentUser._id)
+    );
 
-    } catch (err) {
-      console.error('Error fetching data:', err);
-    }
-  };
+    const unjoinedCommunities = communitiesRes.data.filter(
+      (community) => !community.members.includes(currentUser._id)
+    );
+
+    // Get posts from joined communities
+    const joinedCommunityPosts = joinedCommunities.flatMap((community) =>
+      community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
+    );
+
+    // Get posts from unjoined communities
+    const unjoinedCommunityPosts = unjoinedCommunities.flatMap((community) =>
+      community.postIDs.map((postID) => postsRes.data.find((post) => post._id === postID))
+    );
+
+    // Combine posts: joined communities first, then unjoined
+    const sortedByUserCommunities = [...joinedCommunityPosts, ...unjoinedCommunityPosts];
+
+    setSortedPosts(sortedByUserCommunities);
+  } catch (err) {
+    console.error('Error fetching data:', err);
+  }
+};
   
 
   // Format the timestamp for relative time display
